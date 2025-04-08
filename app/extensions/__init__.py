@@ -1,0 +1,1 @@
+# Initialize third-party extensions like Flask-Login, etc.

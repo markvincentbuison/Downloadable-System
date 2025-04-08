@@ -1,0 +1,78 @@
+body {
+    background-color: #18191a;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    color: #e4e6eb;
+  }
+  .login-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .facebook-logo {
+    font-size: 48px;
+    color: #1877f2;
+    font-weight: bold;
+    margin-bottom: 20px;
+  }
+  .login-container {
+    background-color: #242526;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.6);
+    width: 350px;
+  }
+  .form-group {
+    margin-bottom: 15px;
+  }
+  .form-control {
+    border-radius: 6px;
+    padding: 12px;
+    font-size: 16px;
+    border: 1px solid #3a3b3c;
+    background-color: #3a3b3c;
+    color: #e4e6eb;
+  }
+  .form-control:focus {
+    border-color: #1877f2;
+    box-shadow: 0 0 0 0.2rem rgba(24, 119, 242, 0.4);
+    background-color: #3a3b3c;
+    color: #e4e6eb;
+  }
+  .btn-primary {
+    background-color: #1877f2;
+    color: white;
+    font-weight: bold;
+    font-size: 16px;
+    padding: 12px;
+    border: none;
+    border-radius: 6px;
+    width: 100%;
+  }
+  .btn-primary:hover {
+    background-color: #165eab;
+  }
+  .signup-link {
+    text-align: center;
+    margin-top: 20px;
+  }
+  .signup-link a {
+    color: #4599ff;
+    text-decoration: none;
+    font-weight: bold;
+  }
+  .signup-link a:hover {
+    text-decoration: underline;
+  }
+  .alert {
+    margin-top: 15px;
+    background-color: #3a3b3c;
+    color: #e4e6eb;
+    border: 1px solid #4e4f50;
+  }
+
+  
