@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>View Stats</title>
+
+  <!-- Bootstrap and FontAwesome -->
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet" />
+  <link href="{{ url_for('static', filename='css/base.css') }}" rel="stylesheet" />
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon/favicon.ico') }}"/>
+
+  <!-- Chart.js (for stats visualization) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    .card-stat {
+      border-radius: 15px;
+      box-shadow: 0 0 20px rgba(0,255,255,0.2);
+      transition: transform 0.2s ease;
+    }
+    .card-stat:hover {
+      transform: scale(1.02);
+    }
+    .chart-container {
+      position: relative;
+      height: 400px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container">
+      <a class="navbar-brand" href="#">View Stats</a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+              aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ml-auto">
+          <li class="nav-item">
+            <button onclick="window.close();" class="btn mt-4">Close ❌</button>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Page Content -->
+  <div class="container my-5">
+    <h2 class="text-center mb-4">System Statistics Dashboard</h2>
+
+    <!-- Stats Cards -->
+    <div class="row text-white text-center">
+      <div class="col-md-4 mb-4">
+        <div class="card bg-info card-stat p-4">
+          <h5>Total Users</h5>
+          <h2>{{ total_users }}</h2>
+          <i class="fas fa-users fa-2x"></i>
+        </div>
+      </div>
+      <div class="col-md-4 mb-4">
+        <div class="card bg-success card-stat p-4">
+          <h5>Active Sessions</h5>
+          <h2>{{ active_sessions }}</h2>
+          <i class="fas fa-signal fa-2x"></i>
+        </div>
+      </div>
+      <div class="col-md-4 mb-4">
+        <div class="card bg-warning card-stat p-4">
+          <h5>Admins</h5>
+          <h2>{{ admin_count }}</h2>
+          <i class="fas fa-user-shield fa-2x"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chart Section -->
+    <div class="card mt-4">
+      <div class="card-header bg-dark text-white">
+        <h5 class="mb-0">User Growth Overview</h5>
+      </div>
+      <div class="card-body chart-container">
+        <canvas id="userChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <footer class="text-center py-3">
+    <p>&copy; 2025 Downloadable System. All Rights Reserved.</p>
+  </footer>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Chart Setup -->
+  <script>
+    const ctx = document.getElementById('userChart').getContext('2d');
+    const userChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: {{ growth_labels|safe }},
+        datasets: [{
+          label: 'Users Over Time',
+          data: {{ growth_data|safe }},
+          backgroundColor: 'rgba(0, 255, 255, 0.1)',
+          borderColor: 'cyan',
+          borderWidth: 2,
+          pointBackgroundColor: 'white',
+          pointBorderColor: 'cyan',
+          fill: true,
+          tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { labels: { color: '#000' } }
+        },
+        scales: {
+          x: { ticks: { color: '#000' } },
+          y: { ticks: { color: '#000' }, beginAtZero: true }
+        }
+      }
+    });
+  </script>
+</body>
+</html>

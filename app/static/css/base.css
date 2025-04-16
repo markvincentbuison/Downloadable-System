@@ -1,0 +1,54 @@
+html, body {
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f9;
+    color: #333;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    overflow-x: hidden;
+    
+  }
+
+  .navbar {
+    background: #141414;
+    z-index: 1050; /* Ensure the navbar is above other content */
+
+  }
+
+  .navbar-brand, .nav-link {
+    color: #fff !important;
+    
+  }
+
+  .nav-link:hover {
+    color: #ccc !important;
+  }
+
+  .container {
+    position: relative;
+    z-index: 10;
+  }
+
+  footer {
+    background: #020202;
+    color: #fff;
+    
+  }
+
+  .card {
+      height: 300px;
+      overflow: hidden;  /* Prevent overflow */
+    }
+
+  .card-title {
+    text-align: center;
+  }
+
+  canvas {
+      max-width: 100% !important; /* Ensure the canvas doesn't overflow the container */
+      max-height: 80% !important; /* Adjust the height to fit the box */
+      margin: auto;
+    }
+  /* Ensure all columns (cards) are equal height */
+  .card-body {
+    flex-grow: 1;
+  }
