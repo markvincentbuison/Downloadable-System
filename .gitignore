@@ -1,1 +1,3 @@
 "app/static/built-in-projects/Cybersecurity-System.exe" 
+*.pyc
+*.exe

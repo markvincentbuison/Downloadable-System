@@ -88,6 +88,7 @@ def dashboard():
     cursor = conn.cursor()
     cursor.execute("SELECT username, is_verified, is_admin FROM users WHERE id=%s", (session['user_id'],))
     user = cursor.fetchone()
+    
     cursor.close()
     conn.close()
 
@@ -164,23 +165,33 @@ def verify_email(token):
     # Handle email verification
     conn = create_connection()
     cursor = conn.cursor()
+
     try:
         cursor.execute("SELECT * FROM users WHERE verification_token=%s", (token,))
         user = cursor.fetchone()
+
         if user:
-            cursor.execute("UPDATE users SET is_verified=1, verification_token=NULL WHERE verification_token=%s", (token,))
+            cursor.execute(
+                "UPDATE users SET is_verified=1, verification_token=NULL WHERE verification_token=%s",
+                (token,)
+            )
             conn.commit()
-            flash("Email verified successfully.", 'success')
+            flash("Email verified successfully.", "success")
             return redirect(url_for('routes.dashboard'))
-        flash("Invalid or expired verification link.", 'danger')
-    except mysql.connector.errors.DatabaseError as e:
-        print(f"Error during verification: {e}")
+        else:
+            flash("Invalid or expired verification link.", "danger")
+
+    except mysql.connector.Error as e:
+        print(f"Error during email verification: {e}")
         conn.rollback()
-        flash("An error occurred while verifying your email.", 'danger')
+        flash("An error occurred while verifying your email.", "danger")
+
     finally:
         cursor.close()
         conn.close()
+
     return redirect(url_for('routes.index'))
+
 
 @routes.route('/forgot-password', methods=['POST'])
 def forgot_password():
@@ -199,8 +210,7 @@ def forgot_password():
     if user:
         reset_token = generate_token()
         reset_expiry = datetime.utcnow() + timedelta(hours=1)
-        cursor.execute("UPDATE users SET reset_token=%s, reset_token_expiry=%s WHERE email_address=%s",
-                       (reset_token, reset_expiry, email))
+        cursor.execute("UPDATE users SET reset_token=%s, reset_token_expiry=%s WHERE email_address=%s",(reset_token, reset_expiry, email))
         conn.commit()
         send_reset_email(email, reset_token, user[1])  # Pass username (user[1] is the username)
         flash('A password reset link has been sent to your email.', 'info')
@@ -213,29 +223,33 @@ def forgot_password():
 
 @routes.route('/reset-password/<token>', methods=['GET', 'POST'])
 def reset_password(token):
-    # Handle password reset functionality
+    # Handle GET request - show password reset form
     if request.method == 'GET':
         return render_template('user_reset_password.html', token=token)
 
+    # Handle POST request - process password reset
     new_password = request.form.get('new_password')
     confirm_password = request.form.get('confirm_password')
 
     if not new_password or not confirm_password:
         flash("Please fill out both fields.", "danger")
         return redirect(url_for('routes.user_reset_password', token=token))
+
     if new_password != confirm_password:
         flash("Passwords do not match.", "danger")
         return redirect(url_for('routes.user_reset_password', token=token))
 
     hashed_password = hash_password(new_password)
+
     conn = create_connection()
     cursor = conn.cursor()
 
     try:
-        cursor.execute("SELECT reset_token_expiry FROM users WHERE reset_token=%s", (token,))
-        result = cursor.fetchone()
+        cursor.execute(
+            "SELECT reset_token_expiry FROM users WHERE reset_token=%s", (token,)
+        )
 
-        if not result:
+        if not (result := cursor.fetchone()):
             flash("Invalid or expired reset token.", "danger")
         else:
             expiry_time = result[0]
@@ -243,45 +257,64 @@ def reset_password(token):
                 flash("Reset token has expired. Please request a new one.", "danger")
             else:
                 cursor.execute(
-                    "UPDATE users SET password=%s, reset_token=NULL, reset_token_expiry=NULL WHERE reset_token=%s",
+                    """
+                    UPDATE users
+                    SET password=%s, reset_token=NULL, reset_token_expiry=NULL
+                    WHERE reset_token=%s
+                    """,
                     (hashed_password, token)
                 )
                 conn.commit()
                 flash("Your password has been reset successfully.", "success")
+
     except Exception as e:
         print("Reset password error:", e)
         flash("An error occurred while resetting the password.", "danger")
+
     finally:
         cursor.close()
         conn.close()
 
     return redirect(url_for('routes.index'))
 
+
 @routes.route('/send-verification-email', methods=['POST'])
 def send_verification_email_route_dashboard():
-    # Send verification email from the dashboard
+    # Ensure user is logged in
     user_id = session.get('user_id')
     if not user_id:
-        flash('You need to be logged in to send verification email.', 'warning')
+        flash('You need to be logged in to send a verification email.', 'warning')
         return redirect(url_for('routes.index'))
 
     conn = create_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT email_address FROM users WHERE id=%s", (user_id,))
-    user = cursor.fetchone()
 
-    if user:
-        token = generate_token()
-        cursor.execute("UPDATE users SET verification_token=%s WHERE id=%s", (token, user_id))
-        conn.commit()
-        send_verification_email_function(user[0], token)
-        flash('Verification email sent. Please check your inbox.', 'success')
-    else:
-        flash('User not found.', 'danger')
+    try:
+        cursor.execute("SELECT email_address FROM users WHERE id=%s", (user_id,))
+        user = cursor.fetchone()
 
-    cursor.close()
-    conn.close()
+        if user:
+            token = generate_token()
+            cursor.execute(
+                "UPDATE users SET verification_token=%s WHERE id=%s",
+                (token, user_id)
+            )
+            conn.commit()
+            send_verification_email_function(user[0], token)
+            flash('Verification email sent. Please check your inbox.', 'success')
+        else:
+            flash('User not found.', 'danger')
+
+    except Exception as e:
+        print("Email verification error:", e)
+        flash('An error occurred while sending the verification email.', 'danger')
+
+    finally:
+        cursor.close()
+        conn.close()
+
     return redirect(url_for('routes.user_dashboard'))
+
 
 # ==========================
 # Google OAuth Routes
