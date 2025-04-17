@@ -1,10 +1,15 @@
+# mysql_connect.py
+
+# ✅ Shared Imports
 import mysql.connector
 from mysql.connector import Error
-from app.mysql_config import Config  # Import Config class to get MySQL details
+import psycopg2
+from psycopg2 import OperationalError
+from app.mysql_config import Config  # Import Config class to get DB credentials
 
+# ✅ Legacy/Generic MySQL Connection Function
 def create_connection():
     try:
-        # Use the Config class to get connection details
         connection = mysql.connector.connect(
             host=Config.MYSQL_HOST,
             user=Config.MYSQL_USER,
@@ -13,25 +18,17 @@ def create_connection():
         )
 
         if connection.is_connected():
-            print("Successfully connected to MySQL Render database")
+            print("Successfully connected to MySQL")
             return connection
         else:
-            print("Failed to connect to the database Render")
+            print("Failed to connect to the database")
             return None
 
     except Error as e:
         print(f"Error: {e}")
         return None
 
-#-----------------------------------------
-import mysql.connector
-from mysql.connector import Error
-from app.mysql_config import Config
-
-import psycopg2
-from psycopg2 import OperationalError
-
-# ✅ MySQL Connection
+# ✅ Named MySQL Connection (same functionality, more explicit)
 def create_mysql_connection():
     try:
         connection = mysql.connector.connect(
@@ -63,29 +60,8 @@ def create_postgres_connection():
         print(f"PostgreSQL Error: {e}")
     return None
 
-# Optional: Run directly to test connection
+# ✅ Test connections when running this file directly
 if __name__ == "__main__":
+    create_connection()
     create_mysql_connection()
     create_postgres_connection()
-
-
-
-# mysql_config.py
-import os
-from dotenv import load_dotenv
-
-load_dotenv()  # Load environment variables from .env file
-
-class Config:
-    MYSQL_HOST = os.getenv('DB_HOST')
-    MYSQL_PORT = os.getenv('DB_PORT')  # ✅ Add this line
-    MYSQL_USER = os.getenv('DB_USER')
-    MYSQL_PASSWORD = os.getenv('DB_PASSWORD')
-    MYSQL_DB = os.getenv('DB_NAME')
-    
-    PG_HOST = os.getenv('PG_HOST')
-    PG_PORT = os.getenv('PG_PORT')
-    PG_USER = os.getenv('PG_USER')
-    PG_PASSWORD = os.getenv('PG_PASSWORD')
-    PG_DB = os.getenv('PG_NAME')
-
