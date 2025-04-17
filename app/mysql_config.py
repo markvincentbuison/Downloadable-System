@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv()  # Load environment variables from .env file
 
 class Config:
     # MySQL Configuration for Render
@@ -9,6 +9,10 @@ class Config:
     MYSQL_USER = os.getenv('DB_USER', 'downloadable_db_user')  # Your MySQL username
     MYSQL_PASSWORD = os.getenv('DB_PASSWORD', 'aGeyZP2xfeIfmNnbKByHn768lILopUhT')  # Your MySQL password
     MYSQL_DB = os.getenv('DB_NAME', 'downloadable_db')  # Your MySQL database name
+    MYSQL_PORT = os.getenv('DB_PORT', 3306)  # Default MySQL port, can be changed
+
+    # Construct the MySQL database URI using the environment variables
+    SQLALCHEMY_DATABASE_URI = f'mysql+mysqlconnector://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DB}'
 
     # PostgreSQL Configuration for Render
     PG_HOST = os.getenv('PG_HOST', 'dpg-d00ai0ngi27c73b38t30-a.virginia-postgres.render.com')
@@ -26,4 +30,3 @@ class Config:
     MAIL_USE_TLS = os.getenv('MAIL_USE_TLS', 'True') == 'True'
     MAIL_USE_SSL = os.getenv('MAIL_USE_SSL', 'False') == 'True'
     MAIL_DEFAULT_SENDER = os.getenv('MAIL_DEFAULT_SENDER', 'your_email@example.com')
-
