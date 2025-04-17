@@ -9,7 +9,7 @@ from app.mysql_config import Config  # Import Config class to get DB credentials
 import os
 
 # ✅ Legacy/Generic MySQL Connection Function
-def create_connection():
+def create_connection(): #connected to login
     try:
         connection = mysql.connector.connect(
             host=Config.MYSQL_HOST,
@@ -39,7 +39,7 @@ def create_mysql_connection():
             database=Config.MYSQL_DB
         )
         if connection.is_connected():
-            print("✅ Connected to MySQL")
+            print("Connected to MySQL")
             return connection
     except Error as e:
         print(f"MySQL Error: {e}")
@@ -55,7 +55,7 @@ def create_postgres_connection():
             password=Config.PG_PASSWORD,
             dbname=Config.PG_DB
         )
-        print("✅ Connected to PostgreSQL")
+        print("Connected to PostgreSQL")
         return connection
     except OperationalError as e:
         print(f"PostgreSQL Error: {e}")
@@ -73,7 +73,7 @@ def create_dynamic_connection():
                 password=Config.PG_PASSWORD,
                 dbname=Config.PG_DB
             )
-            print("✅ Connected to PostgreSQL")
+            print("Connected to PostgreSQL")
         else:
             # Local environment (for MySQL)
             connection = mysql.connector.connect(
@@ -84,7 +84,7 @@ def create_dynamic_connection():
                 port=Config.MYSQL_PORT
             )
             if connection.is_connected():
-                print("✅ Connected to MySQL")
+                print("Connected to MySQL")
         
         return connection
     

@@ -61,13 +61,18 @@ def login():
     username = request.form['username']
     password = request.form['password']
 
-    conn = create_connection()
-    if not conn:
+    conn_mysql = create_mysql_connection()
+    conn_postgres = create_postgres_connection()
+
+    if not conn_mysql and not conn_postgres:
         flash('Database connection failed (LOGIN). Please try again later.', 'danger')
         return redirect(url_for('routes.index'))
 
     try:
+        conn = conn_mysql if conn_mysql else conn_postgres
         cursor = conn.cursor()
+
+        # PostgreSQL uses %s, MySQL also uses %s in most connectors (e.g., mysql-connector)
         cursor.execute("SELECT * FROM users WHERE username=%s", (username,))
         user = cursor.fetchone()
         cursor.close()
@@ -86,7 +91,6 @@ def login():
         app.logger.error(f"Login error: {e}")
         flash('An error occurred during login. Please try again later.', 'danger')
         return redirect(url_for('routes.index'))
-
 
 # =========================================
 # Dashboard Route Login (Admin/User Based)
