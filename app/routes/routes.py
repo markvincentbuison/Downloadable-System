@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 import logging
 from app.mysql_connect import create_mysql_connection, create_postgres_connection
 import logging
+import psycopg2
 from flask import Blueprint
 from app.mysql_connect import create_mysql_connection, create_postgres_connection
 # =======show all table===================
@@ -417,3 +418,39 @@ def system_config():
         flash("Failed to load system configuration.", "danger")
         return redirect(url_for('routes.admin_system_config'))
 #-----------------------------------------------#
+
+
+
+#-------------TEST---------------#
+
+def create_users_table():
+    conn = psycopg2.connect(
+        dbname="downloadable_app",
+        user="root",
+        password="rVIIDKOozMHH8LPqHT0dC3EfPxwFN2nP",
+        host="dpg-d00ihffgi27c73bb4afg-a.virginia-postgres.render.com",
+        port="5432"
+    )
+    cur = conn.cursor()
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id SERIAL PRIMARY KEY,
+            username VARCHAR(100) NOT NULL UNIQUE,
+            email VARCHAR(255) NOT NULL UNIQUE,
+            password VARCHAR(255) NOT NULL,
+            is_verified BOOLEAN DEFAULT FALSE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    conn.commit()
+    cur.close()
+    conn.close()
+    print("Users table created.")
+
+@routes.route('/initdb')
+def initdb():
+    try:
+        create_users_table()
+        return "Users table created successfully!"
+    except Exception as e:
+        return f" Error creating table: {e}"
