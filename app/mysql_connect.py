@@ -1,47 +1,31 @@
 # mysql_connect.py
 
-# ✅ Shared Imports
-import mysql.connector
-from mysql.connector import Error
-import psycopg2
-from psycopg2 import OperationalError
-from app.mysql_config import Config  # Import Config class to get DB credentials
 import os
+import mysql.connector
+from mysql.connector import Error as MySQLError
+import psycopg2
+from psycopg2 import OperationalError as PostgresError
+from app.mysql_config import Config  # Ensure Config class has both MySQL and PostgreSQL details
+from dotenv import load_dotenv
 
-# ✅ Legacy/Generic MySQL Connection Function
-def create_connection():
-    try:
-        connection = mysql.connector.connect(
-            host=Config.MYSQL_HOST,
-            user=Config.MYSQL_USER,
-            password=Config.MYSQL_PASSWORD,
-            database=Config.MYSQL_DB
-        )
+load_dotenv()  # Load environment variables from .env
 
-        if connection.is_connected():
-            print("Successfully connected to MySQL")
-            return connection
-        else:
-            print("Failed to connect to the database")
-            return None
+USE_DB = os.getenv('USE_DB', 'mysql').lower()  # Choose between 'mysql' or 'postgres'
 
-    except Error as e:
-        print(f"Error: {e}")
-        return None
-
-# ✅ Named MySQL Connection (same functionality, more explicit)
+# ✅ MySQL Connection
 def create_mysql_connection():
     try:
         connection = mysql.connector.connect(
             host=Config.MYSQL_HOST,
             user=Config.MYSQL_USER,
             password=Config.MYSQL_PASSWORD,
-            database=Config.MYSQL_DB
+            database=Config.MYSQL_DB,
+            port=Config.MYSQL_PORT
         )
         if connection.is_connected():
-            print("✅ Connected to MySQL")
+            print("Connected to MySQL")
             return connection
-    except Error as e:
+    except MySQLError as e:
         print(f"MySQL Error: {e}")
     return None
 
@@ -55,46 +39,29 @@ def create_postgres_connection():
             password=Config.PG_PASSWORD,
             dbname=Config.PG_DB
         )
-        print("✅ Connected to PostgreSQL")
+        print("Connected to PostgreSQL")
         return connection
-    except OperationalError as e:
+    except PostgresError as e:
         print(f"PostgreSQL Error: {e}")
     return None
 
-# ✅ Unified Connection Function (Dynamic MySQL / PostgreSQL Selection)
-def create_dynamic_connection():
+# ✅ Unified DB Connector
+def create_connection():
     try:
-        # Check if the environment is set to production (for PostgreSQL)
-        if os.getenv('FLASK_ENV') == 'production':
-            connection = psycopg2.connect(
-                host=Config.PG_HOST,
-                port=Config.PG_PORT,
-                user=Config.PG_USER,
-                password=Config.PG_PASSWORD,
-                dbname=Config.PG_DB
-            )
-            print("✅ Connected to PostgreSQL")
+        if USE_DB == 'postgres':
+            return create_postgres_connection()
         else:
-            # Local environment (for MySQL)
-            connection = mysql.connector.connect(
-                host=Config.MYSQL_HOST,
-                user=Config.MYSQL_USER,
-                password=Config.MYSQL_PASSWORD,
-                database=Config.MYSQL_DB,
-                port=Config.MYSQL_PORT
-            )
-            if connection.is_connected():
-                print("✅ Connected to MySQL")
-        
-        return connection
-    
-    except (Error, OperationalError) as e:
+            return create_mysql_connection()
+    except (MySQLError, PostgresError) as e:
         print(f"Database Connection Error: {e}")
         return None
 
-# ✅ Test connections when running this file directly
+# ✅ Optional: Manual test
 if __name__ == "__main__":
-    create_connection()        # Legacy MySQL Connection Test
-    create_mysql_connection()  # Explicit MySQL Connection Test
-    create_postgres_connection()  # PostgreSQL Connection Test
-    create_dynamic_connection()  # Dynamic MySQL or PostgreSQL Connection Test
+    conn = create_connection()
+    if conn:
+        print("Connection test successful!")
+        conn.close()
+    else:
+        print("Connection test failed.")
+
