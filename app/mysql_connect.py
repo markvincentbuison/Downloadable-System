@@ -38,7 +38,8 @@ def create_mysql_connection():
             host=Config.MYSQL_HOST,
             user=Config.MYSQL_USER,
             password=Config.MYSQL_PASSWORD,
-            database=Config.MYSQL_DB
+            database=Config.MYSQL_DB,
+            port=int(Config.MYSQL_PORT)  # ✅ This is required!
         )
         if connection.is_connected():
             print("✅ Connected to MySQL")
@@ -78,6 +79,7 @@ load_dotenv()  # Load environment variables from .env file
 
 class Config:
     MYSQL_HOST = os.getenv('DB_HOST')
+    MYSQL_PORT = os.getenv('DB_PORT')  # ✅ Add this line
     MYSQL_USER = os.getenv('DB_USER')
     MYSQL_PASSWORD = os.getenv('DB_PASSWORD')
     MYSQL_DB = os.getenv('DB_NAME')
@@ -87,3 +89,4 @@ class Config:
     PG_USER = os.getenv('PG_USER')
     PG_PASSWORD = os.getenv('PG_PASSWORD')
     PG_DB = os.getenv('PG_NAME')
+
