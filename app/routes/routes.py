@@ -55,27 +55,38 @@ def index():
     # Render the landing page (login/signup page)
     return render_template('index.html')
 
+# ==========================
 @routes.route('/login', methods=['POST'])
 def login():
-    # Handle login functionality
     username = request.form['username']
     password = request.form['password']
+
     conn = create_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM users WHERE username=%s", (username,))
-    user = cursor.fetchone()
-    cursor.fetchall()
-    cursor.close()
-    conn.close()
+    if not conn:
+        flash('Database connection failed. Please try again later.', 'danger')
+        return redirect(url_for('routes.index'))
 
-    if user and bcrypt.checkpw(password.encode('utf-8'), user[2].encode('utf-8')):  # Check credentials
-        session['user_id'] = user[0]
-        session['username'] = user[1]
-        session['is_admin'] = user[-1]  # assuming is_admin is the last column
-        return redirect(url_for('routes.dashboard'))
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM users WHERE username=%s", (username,))
+        user = cursor.fetchone()
+        cursor.close()
+        conn.close()
 
-    flash('Invalid credentials, please try again.', 'danger')
-    return redirect(url_for('routes.index'))
+        if user and bcrypt.checkpw(password.encode('utf-8'), user[2].encode('utf-8')):
+            session['user_id'] = user[0]
+            session['username'] = user[1]
+            session['is_admin'] = user[-1]  # assuming is_admin is last column
+            return redirect(url_for('routes.dashboard'))
+
+        flash('Invalid credentials, please try again.', 'danger')
+        return redirect(url_for('routes.index'))
+
+    except Exception as e:
+        app.logger.error(f"Login error: {e}")
+        flash('An error occurred during login. Please try again later.', 'danger')
+        return redirect(url_for('routes.index'))
+
 
 # =========================================
 # Dashboard Route Login (Admin/User Based)

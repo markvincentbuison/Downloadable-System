@@ -4,20 +4,6 @@ from dotenv import load_dotenv
 load_dotenv()  # Load environment variables from .env file
 
 class Config:
-    # MySQL Configuration for Render
-    MYSQL_HOST = os.getenv('MYSQL_HOST', 'localhost')  # Host of your MySQL DB
-    MYSQL_PORT = os.getenv('MYSQL_PORT', 3306)  # Default MySQL port
-    MYSQL_USER = os.getenv('MYSQL_USER', 'root')  # Your MySQL username
-    MYSQL_PASSWORD = os.getenv('MYSQL_PASSWORD', 'tunnerskylitQ1@3')  # Your MySQL password
-    MYSQL_DB = os.getenv('MYSQL_DB', 'downloadable_apps')  # Your MySQL database name
-
-    # PostgreSQL Configuration for Render (if using PostgreSQL for other purposes)
-    PG_HOST = os.getenv('PG_HOST', 'dpg-d00ai0ngi27c73b38t30-a.virginia-postgres.render.com')
-    PG_PORT = os.getenv('PG_PORT', '5432')
-    PG_USER = os.getenv('PG_USER', 'downloadable_db_user')
-    PG_PASSWORD = os.getenv('PG_PASSWORD', 'aGeyZP2xfeIfmNnbKByHn768lILopUhT')
-    PG_DB = os.getenv('PG_NAME', 'downloadable_db')
-
     # Optional: Other configurations for your app
     SECRET_KEY = os.getenv('SECRET_KEY', 'supersecretkey')
     MAIL_USERNAME = os.getenv('MAIL_USERNAME', 'your_email@example.com')
@@ -27,3 +13,17 @@ class Config:
     MAIL_USE_TLS = os.getenv('MAIL_USE_TLS', 'True') == 'True'
     MAIL_USE_SSL = os.getenv('MAIL_USE_SSL', 'False') == 'True'
     MAIL_DEFAULT_SENDER = os.getenv('MAIL_DEFAULT_SENDER', 'your_email@example.com')
+
+    # MySQL Configuration for Local Development
+    MYSQL_HOST = os.getenv('DB_HOST_LOCAL', 'localhost')  # Host of your MySQL DB (default to localhost for local)
+    MYSQL_PORT = os.getenv('DB_PORT_LOCAL', 3306)  # Default MySQL port
+    MYSQL_USER = os.getenv('DB_USER_LOCAL', 'root')  # Your MySQL username
+    MYSQL_PASSWORD = os.getenv('DB_PASSWORD_LOCAL', 'tunnerskylitQ1@3')  # Your MySQL password
+    MYSQL_DB = os.getenv('DB_NAME_LOCAL', 'downloadable_apps')  # Your MySQL database name
+
+    # PostgreSQL Configuration for Production
+    PG_HOST = os.getenv('DB_HOST_PROD', 'dpg-d00ihffgi27c73bb4afg-a.virginia-postgres.render.com')  # Host of your PostgreSQL DB
+    PG_PORT = os.getenv('DB_PORT_PROD', '5432')  # PostgreSQL port
+    PG_USER = os.getenv('DB_USER_PROD', 'root')  # PostgreSQL username
+    PG_PASSWORD = os.getenv('DB_PASSWORD_PROD', 'rVIIDKOozMHH8LPqHT0dC3EfPxwFN2nP')  # PostgreSQL password
+    PG_DB = os.getenv('DB_NAME_PROD', 'downloadable_app')  # PostgreSQL database name
