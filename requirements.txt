@@ -21,6 +21,7 @@ dulwich==0.22.8
 fastjsonschema==2.21.1
 filelock==3.18.0
 findpython==0.6.3
+flask==2.3.3
 freegames==2.5.3
 git-filter-repo==2.47.0
 greenlet==3.1.1
