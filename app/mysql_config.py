@@ -27,3 +27,5 @@ class Config:
     PG_USER = os.getenv('DB_USER_PROD', 'root')  # PostgreSQL username
     PG_PASSWORD = os.getenv('DB_PASSWORD_PROD', 'rVIIDKOozMHH8LPqHT0dC3EfPxwFN2nP')  # PostgreSQL password
     PG_DB = os.getenv('DB_NAME_PROD', 'downloadable_app')  # PostgreSQL database name
+
+
