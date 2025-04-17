@@ -5,11 +5,11 @@ load_dotenv()  # Load environment variables from .env file
 
 class Config:
     # MySQL Configuration for Render
-    MYSQL_HOST = os.getenv('MYSQL_HOST', 'downloadable-system.onrender.com')  # Host of your MySQL DB
+    MYSQL_HOST = os.getenv('MYSQL_HOST', 'localhost')  # Host of your MySQL DB
     MYSQL_PORT = os.getenv('MYSQL_PORT', 3306)  # Default MySQL port
-    MYSQL_USER = os.getenv('MYSQL_USER', 'your_user')  # Your MySQL username
-    MYSQL_PASSWORD = os.getenv('MYSQL_PASSWORD', 'your_password')  # Your MySQL password
-    MYSQL_DB = os.getenv('MYSQL_DB', 'downloadable_db')  # Your MySQL database name
+    MYSQL_USER = os.getenv('MYSQL_USER', 'root')  # Your MySQL username
+    MYSQL_PASSWORD = os.getenv('MYSQL_PASSWORD', 'tunnerskylitQ1@3')  # Your MySQL password
+    MYSQL_DB = os.getenv('MYSQL_DB', 'downloadable_apps')  # Your MySQL database name
 
     # PostgreSQL Configuration for Render (if using PostgreSQL for other purposes)
     PG_HOST = os.getenv('PG_HOST', 'dpg-d00ai0ngi27c73b38t30-a.virginia-postgres.render.com')
