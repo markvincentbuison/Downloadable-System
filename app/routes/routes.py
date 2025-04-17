@@ -63,7 +63,7 @@ def login():
 
     conn = create_connection()
     if not conn:
-        flash('Database connection failed. Please try again later.', 'danger')
+        flash('Database connection failed. Please try again later. INAAYOS KO PA PRE KALMA!', 'danger')
         return redirect(url_for('routes.index'))
 
     try:
