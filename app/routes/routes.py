@@ -10,31 +10,15 @@ import mysql.connector
 from datetime import datetime, timedelta
 import logging
 from app.mysql_connect import create_mysql_connection, create_postgres_connection
+
 from flask import Blueprint
+from app.mysql_connect import create_mysql_connection, create_postgres_connection
 # =======show all table===================
 from flask import Blueprint, render_template
 # ==========================
-import mysql.connector
-from app.config import Config
 # ======================
 # Blueprint
-# Test MySQL connection
-print(f"Connecting to MySQL database: {Config.MYSQL_DB} on host {Config.MYSQL_HOST}...")
 
-# Attempt to connect to MySQL
-try:
-    conn = mysql.connector.connect(
-        host=Config.MYSQL_HOST,
-        user=Config.MYSQL_USER,
-        password=Config.MYSQL_PASSWORD,
-        database=Config.MYSQL_DB
-    )
-    print("Connection successful!")
-    cursor = conn.cursor()
-    # Your database operations go here
-except mysql.connector.Error as err:
-    print(f"Error: {err}")
-    # Handle the error or return an error response
 # ==========================
 routes = Blueprint('routes', __name__)
 logging.basicConfig(level=logging.DEBUG)
