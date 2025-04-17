@@ -10,9 +10,7 @@ import mysql.connector
 from datetime import datetime, timedelta
 import logging
 from app.mysql_connect import create_mysql_connection, create_postgres_connection
-
 from flask import Blueprint
-from app.mysql_connect import create_mysql_connection, create_postgres_connection
 # =======show all table===================
 from flask import Blueprint, render_template
 # ==========================
