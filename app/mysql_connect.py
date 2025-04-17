@@ -38,8 +38,7 @@ def create_mysql_connection():
             host=Config.MYSQL_HOST,
             user=Config.MYSQL_USER,
             password=Config.MYSQL_PASSWORD,
-            database=Config.MYSQL_DB,
-            port=int(Config.MYSQL_PORT)  # ✅ This is required!
+            database=Config.MYSQL_DB
         )
         if connection.is_connected():
             print("✅ Connected to MySQL")

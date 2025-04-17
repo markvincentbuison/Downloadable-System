@@ -360,7 +360,7 @@ def activity_logs():
     # Render system configuration page (admin)
     return render_template("admin_activity_logs.html")
 
-
+ 
 
 #===================function fo modal show all databases==============#
 
@@ -402,24 +402,3 @@ def system_config():
         flash("Failed to load system configuration.", "danger")
         return redirect(url_for('routes.admin_system_config'))
 #-----------------------------------------------#
-import os
-import mysql.connector
-
-def create_connection():
-    db_host = os.getenv('DB_HOST', 'localhost')  # Use DB_HOST from environment variables
-    db_user = os.getenv('DB_USER', 'root')  # Use DB_USER from environment variables
-    db_password = os.getenv('DB_PASSWORD', '')  # Use DB_PASSWORD from environment variables
-    db_name = os.getenv('DB_NAME', 'downloadable_apps')  # Use DB_NAME from environment variables
-
-    try:
-        conn = mysql.connector.connect(
-            host=db_host,
-            user=db_user,
-            password=db_password,
-            database=db_name
-        )
-        return conn
-    except mysql.connector.Error as err:
-        print(f"Error: {err}")
-        raise
-
