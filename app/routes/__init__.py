@@ -9,14 +9,6 @@ import bcrypt
 import re
 import mysql.connector  # Add this import at the top of the file
 
-
-
-#=====================GOOGLE AUTH=======================
-from flask import Flask, redirect, url_for, session, flash
-from flask_dance.contrib.google import make_google_blueprint, google
-import mysql.connector
-from app.mysql_connect import create_connection  # Assuming you have this in mysql_connect.py
-
 # ============================================
 # Blueprint Functions
 # ============================================
@@ -274,53 +266,3 @@ def send_verification_email_route_dashboard():
 
 
 
-
-# ================================
-# Google OAuth Login Route
-# ================================
-@routes.route('/login/google')
-def google_login():
-    if not google.authorized:
-        return redirect(url_for('google.login'))
-
-    user_info = google.get('/plus/v1/people/me')
-    if user_info.status != 200:
-        flash("Failed to retrieve user information from Google.", 'danger')
-        return redirect(url_for('routes.index'))
-
-    user_data = user_info.json()
-
-    conn = create_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM users WHERE email_address=%s", (user_data['emails'][0]['value'],))
-    user = cursor.fetchone()
-
-    if user:
-        session['user_id'] = user[0]
-        session['username'] = user[1]
-        flash('Logged in successfully via Google!', 'success')
-    else:
-        username = user_data['displayName']
-        hashed_password = hash_password('google_oauth_placeholder_password')
-        verification_token = generate_token()
-
-        cursor.execute(
-            "INSERT INTO users (username, password, email_address, verification_token, is_verified) "
-            "VALUES (%s, %s, %s, %s, %s)", (username, hashed_password, user_data['emails'][0]['value'], verification_token, 1)
-        )
-        conn.commit()
-        flash('Account created via Google login!', 'success')
-
-    cursor.close()
-    conn.close()
-
-    return redirect(url_for('routes.user_dashboard'))
-
-
-@routes.route('/google_login/authorized')
-def google_authorized():
-    if google.authorized:
-        return redirect(url_for('routes.google_login'))
-    else:
-        flash('Authorization failed.', 'danger')
-        return redirect(url_for('routes.index'))

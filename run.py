@@ -1,6 +1,10 @@
 from app import create_app
 import os
 
+# ✅ Load environment variables from .env if available
+from dotenv import load_dotenv
+load_dotenv()
+
 app = create_app()
 
 if __name__ == "__main__":

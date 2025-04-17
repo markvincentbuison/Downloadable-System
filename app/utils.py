@@ -27,7 +27,7 @@ def send_email(subject, body, recipient_email):
         print(f"[!] Failed to send email to {recipient_email}: {e}")
 
 
-def send_verification_email(email, token,username):
+def send_verification_email(email, token, username):
     """Sends a verification email to the user with a unique token."""
     subject = "Email Verification"
     verification_link = url_for('routes.verify_email', token=token, _external=True)
@@ -45,7 +45,7 @@ TunNer Team
     send_email(subject, body, email)
 
 
-def send_reset_email(email, token,username):
+def send_reset_email(email, token, username):
     """Sends a password reset email with a reset token."""
     reset_link = url_for('routes.reset_password', token=token, _external=True)
     subject = "Password Reset Request"
@@ -57,10 +57,11 @@ You requested a password reset. Click the link below to reset your password:
 
 If you did not request this, you can safely ignore this email.
 
-Best,
+Best regards,
 TunNer Team
 """
     send_email(subject, body, email)
+
 
 def validate_username(username):
     """Validates the username based on length and allowed characters."""
@@ -77,4 +78,32 @@ def hash_password(password):
     return bcrypt.hashpw(password.encode('utf-8'), salt)
 
 
+def verify_password(password, hashed_password):
+    """Verifies the provided password against the stored hashed password."""
+    return bcrypt.checkpw(password.encode('utf-8'), hashed_password)
 
+
+def get_user_by_email(email):
+    """Fetches the user from the database by email."""
+    # Replace with actual DB query to get the user by email.
+    pass
+
+def create_user(name, email, hashed_password, verified=False):
+    """Creates a new user in the database."""
+    # Replace with actual DB logic to create the user.
+    pass
+
+def verify_user_by_token(token):
+    """Verifies the token for email verification or reset."""
+    # Implement actual token verification logic.
+    pass
+
+def update_user_verification_status(email):
+    """Updates the user’s verification status in the database."""
+    # Implement logic to update the user's verified status.
+    pass
+
+def update_user_password(email, hashed_password):
+    """Updates the user’s password in the database."""
+    # Implement logic to update the user's password.
+    pass

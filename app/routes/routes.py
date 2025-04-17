@@ -9,12 +9,34 @@ import re
 import mysql.connector
 from datetime import datetime, timedelta
 import logging
+from app.mysql_connect import create_mysql_connection, create_postgres_connection
 
+from flask import Blueprint
+from app.mysql_connect import create_mysql_connection, create_postgres_connection
 # =======show all table===================
 from flask import Blueprint, render_template
 # ==========================
+import mysql.connector
+from app.config import Config
 # ======================
 # Blueprint
+# Test MySQL connection
+print(f"Connecting to MySQL database: {Config.MYSQL_DB} on host {Config.MYSQL_HOST}...")
+
+# Attempt to connect to MySQL
+try:
+    conn = mysql.connector.connect(
+        host=Config.MYSQL_HOST,
+        user=Config.MYSQL_USER,
+        password=Config.MYSQL_PASSWORD,
+        database=Config.MYSQL_DB
+    )
+    print("Connection successful!")
+    cursor = conn.cursor()
+    # Your database operations go here
+except mysql.connector.Error as err:
+    print(f"Error: {err}")
+    # Handle the error or return an error response
 # ==========================
 routes = Blueprint('routes', __name__)
 logging.basicConfig(level=logging.DEBUG)
@@ -74,11 +96,10 @@ def login():
     return redirect(url_for('routes.index'))
 
 # =========================================
-# Dashboard Route (Admin/User Based)
+# Dashboard Route Login (Admin/User Based)
 # =========================================
 @routes.route('/dashboard')
 def dashboard():
-
     # Check if the user is logged in
     if 'user_id' not in session:
         flash('You need to login to access the system', 'warning')
@@ -99,7 +120,7 @@ def dashboard():
             return render_template('admin_dashboard.html', username=user[0], is_verified=user[1])
         else:  # Regular user
             # Render regular user dashboard
-            return render_template('user_dashboard.html', username=user[0], is_verified=user[1])
+            return render_template('dashboard.html', username=user[0], is_verified=user[1])
 
     flash('User not found. Please login again.', 'danger')
     return redirect(url_for('routes.logout'))
@@ -113,18 +134,22 @@ def logout():
 
 @routes.route('/signup', methods=['POST'])
 def signup():
-    # Handle signup functionality
     username = request.form.get('username')
     password = request.form.get('password')
     email = request.form.get('email_address')
     confirmation_password = request.form.get('confirm_password')
 
+    # Debugging log
+    logging.debug(f"Received signup data: username={username}, email={email}")
+    
     if not email:
         flash('Email address is required.', 'danger')
         return redirect(url_for('routes.index'))
+
     if (err := validate_username(username)):
         flash(err, 'danger')
         return redirect(url_for('routes.index'))
+
     if password != confirmation_password:
         flash('Passwords do not match.', 'danger')
         return redirect(url_for('routes.index'))
@@ -152,7 +177,7 @@ def signup():
         flash('Signup successful. Check your email to verify your account.', 'success')
 
     except Exception as e:
-        print("Signup error:", e)
+        logging.error(f"Signup error: {e}")
         flash('An error occurred during signup. Please try again.', 'danger')
     finally:
         cursor.close()
@@ -200,13 +225,11 @@ def forgot_password():
     if not email:
         flash('Please enter your email address.', 'warning')
         return redirect(url_for('routes.index'))
-
     conn = create_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM users WHERE email_address=%s", (email,))
     user = cursor.fetchone()
     cursor.fetchall()
-
     if user:
         reset_token = generate_token()
         reset_expiry = datetime.utcnow() + timedelta(hours=1)
@@ -216,7 +239,6 @@ def forgot_password():
         flash('A password reset link has been sent to your email.', 'info')
     else:
         flash('Email not found. Please try again.', 'danger')
-
     cursor.close()
     conn.close()
     return redirect(url_for('routes.index'))
@@ -313,7 +335,7 @@ def send_verification_email_route_dashboard():
         cursor.close()
         conn.close()
 
-    return redirect(url_for('routes.user_dashboard'))
+    return redirect(url_for('routes.dashboard'))
 
 
 # ==========================
@@ -398,3 +420,6 @@ def system_config():
         flash("Failed to load system configuration.", "danger")
         return redirect(url_for('routes.admin_system_config'))
 #-----------------------------------------------#
+
+
+
