@@ -402,6 +402,19 @@ def system_config():
         flash("Failed to load system configuration.", "danger")
         return redirect(url_for('routes.admin_system_config'))
 #-----------------------------------------------#
-
-
+import os
+import mysql.connector
+def create_connection():
+    db_host = os.getenv('DB_HOST', 'localhost')
+    db_user = os.getenv('DB_USER', 'root')
+    db_password = os.getenv('DB_PASSWORD', '')
+    db_name = os.getenv('DB_NAME', 'downloadable_apps')
+    
+    conn = mysql.connector.connect(
+        host=db_host,
+        user=db_user,
+        password=db_password,
+        database=db_name
+    )
+    return conn
 
