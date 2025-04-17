@@ -10,7 +10,7 @@ import mysql.connector
 from datetime import datetime, timedelta
 import logging
 from app.mysql_connect import create_mysql_connection, create_postgres_connection
-
+import logging
 from flask import Blueprint
 from app.mysql_connect import create_mysql_connection, create_postgres_connection
 # =======show all table===================
@@ -404,17 +404,22 @@ def system_config():
 #-----------------------------------------------#
 import os
 import mysql.connector
+
 def create_connection():
-    db_host = os.getenv('DB_HOST', 'localhost')
-    db_user = os.getenv('DB_USER', 'root')
-    db_password = os.getenv('DB_PASSWORD', '')
-    db_name = os.getenv('DB_NAME', 'downloadable_apps')
-    
-    conn = mysql.connector.connect(
-        host=db_host,
-        user=db_user,
-        password=db_password,
-        database=db_name
-    )
-    return conn
+    db_host = os.getenv('DB_HOST', 'localhost')  # Use DB_HOST from environment variables
+    db_user = os.getenv('DB_USER', 'root')  # Use DB_USER from environment variables
+    db_password = os.getenv('DB_PASSWORD', '')  # Use DB_PASSWORD from environment variables
+    db_name = os.getenv('DB_NAME', 'downloadable_apps')  # Use DB_NAME from environment variables
+
+    try:
+        conn = mysql.connector.connect(
+            host=db_host,
+            user=db_user,
+            password=db_password,
+            database=db_name
+        )
+        return conn
+    except mysql.connector.Error as err:
+        print(f"Error: {err}")
+        raise
 
