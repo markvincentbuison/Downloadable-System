@@ -35,14 +35,11 @@ def send_verification_email_function(email, token):
     body = f"Please verify your email by clicking the following link: {verification_link}"
     send_email(subject, body, email)
 
-# ===========================================================================================================
-# Routes
-# ===========================================================================================================
-
+#===============Routes===========================================================================================
 @routes.route('/')
 def index():
     return render_template('index.html')
-# ==============Login=============================================================================================
+#==============Login=============================================================================================
 @routes.route('/login', methods=['POST'])
 def login():
     username = request.form['username']
@@ -84,7 +81,7 @@ def login():
         flash('User not found.', 'danger')
 
     return redirect(url_for('routes.index'))
-#================Signup===========================================================================================
+#================Signup=========================================================================================
 @routes.route('/signup', methods=['POST'])
 def signup():
     username = request.form.get('username')
@@ -126,44 +123,37 @@ def signup():
         if cursor: cursor.close()
         if conn: conn.close()
     return redirect(url_for('routes.index'))
-#=============dashboard==============================================================================================
+#=============Dashboard==============================================================================================
 @routes.route('/dashboard')
 def dashboard():
     if 'user_id' not in session:
         flash('You need to login to access the system', 'warning')
         return redirect(url_for('routes.index'))
-
     conn = create_connection()
     cursor = conn.cursor()
-
     # ✅ Fetch username, is_admin, and is_verified
     cursor.execute("SELECT username, is_admin, is_verified FROM users WHERE id=%s", (session['user_id'],))
     user = cursor.fetchone()
-
     cursor.close()
     conn.close()
-
     if user:
         username, is_admin, is_verified = user
         session['is_admin'] = is_admin
         session['is_verified'] = is_verified  # ✅ Save to session for reuse if needed
-
         if is_admin:
             return render_template('admin_dashboard.html', username=username, is_verified=is_verified)
         else:
             return render_template('user_dashboard.html', username=username, is_verified=is_verified)
-
     flash('User not found. Please login again.', 'danger')
     return redirect(url_for('routes.logout'))
 
 #=============Logout==============================================================================================
-
 @routes.route('/logout')
 def logout():
     session.clear()
     flash('You have been logged out successfully.', 'info')
     return redirect(url_for('routes.index'))
-#=============Verify email==============================================================================================
+#=============Verify email=========================================================================================
 @routes.route('/verify-email/<token>')
 def verify_email(token):
     conn = create_connection()
@@ -186,8 +176,7 @@ def verify_email(token):
         cursor.close()
         conn.close()
     return redirect(url_for('routes.index'))
-
-#============================FORGOT PASSWORD===============================================================================
+#============================FORGOT PASSWORD========================================================================
 @routes.route('/forgot-password', methods=['POST'])
 def forgot_password():
     email = request.form.get('forgot_email')
@@ -220,20 +209,16 @@ def forgot_password():
         cursor.close()
         conn.close()
     return redirect(url_for('routes.index'))
-
-#========================USER RESET PASSWORD===================================================================================
+#========================USER RESET PASSWORD========================================================================
 @routes.route('/reset-password/<token>', methods=['GET', 'POST'])
 def reset_password(token):
     if request.method == 'GET':
         return render_template('user_reset_password.html', token=token)  # ✅ updated template name
-
     new_password = request.form.get('new_password')
     confirm_password = request.form.get('confirm_password')
-
     if not new_password or not confirm_password:
         flash("Please fill out both fields.", "danger")
         return redirect(url_for('routes.reset_password', token=token))
-
     if new_password != confirm_password:
         flash("Passwords do not match.", "danger")
         return redirect(url_for('routes.reset_password', token=token))
@@ -250,10 +235,7 @@ def reset_password(token):
             if datetime.utcnow() > expiry_time:
                 flash("Reset token has expired. Please request a new one.", "danger")
             else:
-                cursor.execute(
-                    "UPDATE users SET password=%s, reset_token=NULL, reset_token_expiry=NULL WHERE reset_token=%s",
-                    (hashed_password, token)
-                )
+                cursor.execute("UPDATE users SET password=%s, reset_token=NULL, reset_token_expiry=NULL WHERE reset_token=%s",(hashed_password, token))
                 conn.commit()
                 flash("Your password has been reset successfully.", "success")
     except Exception as e:
@@ -264,7 +246,7 @@ def reset_password(token):
         conn.close()
     return redirect(url_for('routes.index'))
 
-#===========================================================================================================
+#============Send Verification Email==================================================================================
 @routes.route('/send-verification-email', methods=['POST'])
 def send_verification_email_route_dashboard():
     user_id = session.get('user_id')
@@ -287,9 +269,9 @@ def send_verification_email_route_dashboard():
     conn.close()
     return redirect(url_for('routes.dashboard'))
 
-# ==========================
+#======================================================================================================================
 # Google OAuth Routes
-# ==========================
+#======================================================================================================================
 @routes.route("/login/google")
 def google_login():
     return redirect(url_for("google.login"))
