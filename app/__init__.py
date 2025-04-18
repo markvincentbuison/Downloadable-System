@@ -4,6 +4,7 @@ from flask_dance.contrib.google import make_google_blueprint
 from dotenv import load_dotenv
 from app.routes.routes import routes
 from app.extensions.mail import mail
+from datetime import timedelta
 
 # Load environment variables from .env at the root
 load_dotenv()
@@ -13,6 +14,10 @@ def create_app():
 
     # Secret Key
     app.secret_key = os.getenv("SECRET_KEY", "fallback_secret")
+
+    # Session and Remember Me Settings
+    app.config['REMEMBER_COOKIE_DURATION'] = timedelta(days=30)  # Remember user for 30 days
+    app.config['SESSION_PROTECTION'] = 'strong'  # Strong session protection
 
     # Mail Configuration
     app.config["MAIL_SERVER"] = os.getenv("MAIL_SERVER")

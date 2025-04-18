@@ -5,26 +5,22 @@ from app.extensions.mail import mail
 from app.utils import (generate_token, send_email, send_verification_email, send_reset_email)
 import bcrypt
 import re
-
 import mysql.connector
 from datetime import datetime, timedelta
 import logging
-# =====this below for for render connecting 24/7=====================
 import threading
 import time
 import requests
-# =====THIS IS FOR GOOGLE=====================
 from flask import redirect, url_for, session, flash
 from flask_dance.contrib.google import google
-# ==========================
+
 # Blueprint
-# ==========================
 routes = Blueprint('routes', __name__)
 logging.basicConfig(level=logging.DEBUG)
 
-# ==========================
+# ===========================
 # Helper Functions
-# ==========================
+# ===========================
 def validate_username(username):
     if len(username) < 3 or len(username) > 11:
         return "Username must be between 3 and 11 characters."
@@ -41,16 +37,25 @@ def send_verification_email_function(email, token):
     body = f"Please verify your email by clicking the following link: {verification_link}"
     send_email(subject, body, email)
 
-#===============Routes===========================================================================================
+# ===========================
+# Routes
+# ===========================
+
 @routes.route('/')
 def index():
+    # Check if the user is already logged in
+    if 'user_id' in session:
+        return redirect(url_for('routes.dashboard'))  # Redirect to dashboard if already logged in
     return render_template('index.html')
-#==============Login=============================================================================================
+
 @routes.route('/login', methods=['POST'])
 def login():
+    # Prevent logged-in users from going back to login page
+    if 'user_id' in session:
+        return redirect(url_for('routes.dashboard'))  # Redirect to dashboard if already logged in
+
     username = request.form['username']
     password = request.form['password']
-    # Try creating a connection
     conn = create_connection()
     if conn is None:
         flash('Failed to connect to the database.', 'danger')
@@ -66,6 +71,7 @@ def login():
     finally:
         if conn:
             conn.close()
+    
     if user:
         try:
             stored_hash = user[2]  # Assuming 3rd column is password hash
@@ -87,49 +93,10 @@ def login():
         flash('User not found.', 'danger')
 
     return redirect(url_for('routes.index'))
-#================Signup=========================================================================================
-@routes.route('/signup', methods=['POST'])
-def signup():
-    username = request.form.get('username')
-    password = request.form.get('password')
-    email = request.form.get('email_address')
-    confirmation_password = request.form.get('confirm_password')
-    if not email:
-        flash('Email address is required.', 'danger')
-        return redirect(url_for('routes.index'))
-    if (err := validate_username(username)):
-        flash(err, 'danger')
-        return redirect(url_for('routes.index'))
-    if password != confirmation_password:
-        flash('Passwords do not match.', 'danger')
-        return redirect(url_for('routes.index'))
 
-    try:
-        # 🔐 Hash password using bcrypt
-        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-        verification_token = generate_token()
-        verification_expiry = datetime.utcnow() + timedelta(hours=1)
-        conn = create_connection()
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM users WHERE username=%s OR email_address=%s", (username, email))
-        if cursor.fetchone():
-            flash('Username or Email already exists.', 'danger')
-            return redirect(url_for('routes.index'))
-        cursor.execute("""
-            INSERT INTO users (username, password, email_address, verification_token, verification_token_expiry, is_verified)
-            VALUES (%s, %s, %s, %s, %s, %s)
-        """, (username, hashed_password, email, verification_token, verification_expiry, False))
-        conn.commit()
-        send_verification_email(email, verification_token, username)
-        flash('Signup successful. Check your email to verify your account.', 'success')
-    except Exception as e:
-        print("Signup error:", e)
-        flash('An error occurred during signup. Please try again.', 'danger')
-    finally:
-        if cursor: cursor.close()
-        if conn: conn.close()
-    return redirect(url_for('routes.index'))
-#=============Dashboard==============================================================================================
+# Continue your signup, dashboard, and other routes as you have them...
+# Continue your other route definitions...
+
 @routes.route('/dashboard')
 def dashboard():
     if 'user_id' not in session:
@@ -137,7 +104,6 @@ def dashboard():
         return redirect(url_for('routes.index'))
     conn = create_connection()
     cursor = conn.cursor()
-    # ✅ Fetch username, is_admin, and is_verified
     cursor.execute("SELECT username, is_admin, is_verified FROM users WHERE id=%s", (session['user_id'],))
     user = cursor.fetchone()
     cursor.close()
@@ -145,13 +111,14 @@ def dashboard():
     if user:
         username, is_admin, is_verified = user
         session['is_admin'] = is_admin
-        session['is_verified'] = is_verified  # ✅ Save to session for reuse if needed
+        session['is_verified'] = is_verified  # Save to session for reuse if needed
         if is_admin:
             return render_template('admin_dashboard.html', username=username, is_verified=is_verified)
         else:
             return render_template('user_dashboard.html', username=username, is_verified=is_verified)
     flash('User not found. Please login again.', 'danger')
     return redirect(url_for('routes.logout'))
+
 
 #=============Logout==============================================================================================
 @routes.route('/logout')
@@ -296,6 +263,7 @@ def google_authorized():
         flash("Google login failed!", "danger")
         return redirect(url_for('routes.login'))
 
+    # Fetch user info from Google
     resp = google.get("/oauth2/v2/userinfo")
     if not resp.ok:
         flash("Failed to fetch user info.", "danger")
@@ -305,9 +273,25 @@ def google_authorized():
     email = user_info["email"]
     name = user_info.get("name", "")
 
-    # You can now check if the user exists in your DB or register them
+    # Check if the user already exists in your database
+    # This is an example, modify based on your actual database setup
+    user = get_user_by_email(email)  # Replace with your actual DB query logic
+    if not user:
+        # If the user doesn't exist, register them
+        register_new_user(email, name)  # Replace with your actual registration logic
+
     session['user_email'] = email
     flash(f"Welcome, {name}!", "success")
     return redirect(url_for('routes.dashboard'))
 
+# Example helper functions
+def get_user_by_email(email):
+    # Query your database to check if user exists by email
+    # return user if found, else return None
+    pass
+
+def register_new_user(email, name):
+    # Register new user in the database
+    # Store user information
+    pass
 # ===================== End of Google OAuth ==========================
