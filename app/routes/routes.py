@@ -27,8 +27,7 @@ def validate_username(username):
     return None
 
 def hash_password(password):
-    salt = bcrypt.gensalt()
-    return bcrypt.hashpw(password.encode('utf-8'), salt)
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
 def send_verification_email_function(email, token):
     subject = "Email Verification"
@@ -92,6 +91,9 @@ def login():
 # -----------------------
 # Signup
 # -----------------------
+
+
+
 @routes.route('/signup', methods=['POST'])
 def signup():
     username = request.form.get('username')
@@ -109,11 +111,13 @@ def signup():
         flash('Passwords do not match.', 'danger')
         return redirect(url_for('routes.index'))
 
-    hashed_password = hash_password(password)
-    verification_token = generate_token()
-    verification_expiry = datetime.utcnow() + timedelta(hours=1)
-
     try:
+        # 🔐 Hash password using bcrypt
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        
+        verification_token = generate_token()
+        verification_expiry = datetime.utcnow() + timedelta(hours=1)
+
         conn = create_connection()
         cursor = conn.cursor()
 
@@ -123,9 +127,9 @@ def signup():
             return redirect(url_for('routes.index'))
 
         cursor.execute("""
-    INSERT INTO users (username, password, email_address, verification_token, verification_token_expiry, is_verified)
-    VALUES (%s, %s, %s, %s, %s, %s)
-""", (username, hashed_password, email, verification_token, verification_expiry, False))
+            INSERT INTO users (username, password, email_address, verification_token, verification_token_expiry, is_verified)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (username, hashed_password, email, verification_token, verification_expiry, False))
         conn.commit()
 
         send_verification_email(email, verification_token, username)
@@ -135,8 +139,14 @@ def signup():
         print("Signup error:", e)
         flash('An error occurred during signup. Please try again.', 'danger')
     finally:
-        cursor.close()
-        conn.close()
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+    return redirect(url_for('routes.index'))
+
+
+
+
 #===========================================================================================================
     return redirect(url_for('routes.index'))
 @routes.route('/dashboard')
@@ -170,7 +180,8 @@ def verify_email(token):
         cursor.execute("SELECT * FROM users WHERE verification_token=%s", (token,))
         user = cursor.fetchone()
         if user:
-            cursor.execute("UPDATE users SET is_verified=1, verification_token=NULL WHERE verification_token=%s", (token,))
+            # Update with TRUE for the boolean field
+            cursor.execute("UPDATE users SET is_verified=TRUE, verification_token=NULL WHERE verification_token=%s", (token,))
             conn.commit()
             flash("Email verified successfully.", 'success')
             return redirect(url_for('routes.dashboard'))
@@ -184,6 +195,7 @@ def verify_email(token):
         conn.close()
     return redirect(url_for('routes.index'))
 
+#===========================================================================================================
 @routes.route('/forgot-password', methods=['POST'])
 def forgot_password():
     email = request.form.get('forgot_email')

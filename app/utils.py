@@ -26,25 +26,28 @@ def send_email(subject, body, recipient_email):
     except Exception as e:
         print(f"[!] Failed to send email to {recipient_email}: {e}")
 
-
+# =============================================================================================================
 def send_verification_email(email, token, username):
     """Sends a verification email to the user with a unique token."""
-    subject = "Email Verification"
+    subject = "Verify Your Email - TunNer"
     verification_link = url_for('routes.verify_email', token=token, _external=True)
-    body = f"""Hi {username},
+    
+    body = f"""
+Hi {username},
 
-Thanks for signing up! Please verify your email by clicking the link below:
+🎉 Welcome to TunNer! We're excited to have you on board.
 
-{verification_link} 
+To complete your registration, please verify your email address by clicking the link below:
+🔗 {verification_link}
 
-If you did not sign up, please ignore this message.
+This link will expire after a short period, so be sure to verify soon!  
+If you didn’t sign up for TunNer, please ignore this email.
 
-Best regards,
-TunNer Team
+Cheers,  
+✨ The TunNer Team
 """
     send_email(subject, body, email)
-
-
+# =============================================================================================================
 def send_reset_email(email, token, username):
     """Sends a password reset email with a reset token."""
     reset_link = url_for('routes.reset_password', token=token, _external=True)
