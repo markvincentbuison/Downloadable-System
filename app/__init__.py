@@ -1,7 +1,7 @@
-from flask import Flask, redirect, url_for, session
+from flask import Flask
 from app.routes.routes import routes
 from app.extensions.mail import mail
-from flask_dance.contrib.google import make_google_blueprint, google
+from flask_dance.contrib.google import make_google_blueprint
 from dotenv import load_dotenv
 import os
 
@@ -35,9 +35,9 @@ def create_app():
         client_secret=app.config['GOOGLE_OAUTH_CLIENT_SECRET'],
         redirect_to='routes.google_authorized'  # Make sure this matches the route in routes.py
     )
-    app.register_blueprint(google_bp, url_prefix='/google_login')
 
-    # Register main blueprint
-    app.register_blueprint(routes)
+    # Register blueprints
+    app.register_blueprint(google_bp, url_prefix='/google_login')  # Register Google blueprint here
+    app.register_blueprint(routes)  # Register main routes blueprint
 
     return app
