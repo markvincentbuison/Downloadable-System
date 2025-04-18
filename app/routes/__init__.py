@@ -9,6 +9,14 @@ import bcrypt
 import re
 import mysql.connector  # Add this import at the top of the file
 
+
+
+#=====================GOOGLE AUTH=======================
+from flask import Flask, redirect, url_for, session, flash
+from flask_dance.contrib.google import make_google_blueprint, google
+import mysql.connector
+from app.mysql_connect import create_connection  # Assuming you have this in mysql_connect.py
+
 # ============================================
 # Blueprint Functions
 # ============================================
@@ -56,11 +64,11 @@ def login():
     if user and bcrypt.checkpw(password.encode('utf-8'), user[2].encode('utf-8')):  # Assuming password is at index 2
         session['user_id'] = user[0]
         session['username'] = user[1]
-        return redirect(url_for('routes.user_dashboard'))
+        return redirect(url_for('routes.dashboard'))
     flash('Invalid credentials, please try again.', 'danger')
     return redirect(url_for('routes.index'))
 
-@routes.route('/user_dashboard')
+@routes.route('/dashboard')
 def dashboard():
     if 'user_id' not in session:
         flash('You need to login to access the system', 'warning')
@@ -72,7 +80,7 @@ def dashboard():
     cursor.close()
     conn.close()
     if user:
-        return render_template('user_dashboard.html', username=user[0], is_verified=user[1])
+        return render_template('dashboard.html', username=user[0], is_verified=user[1])
     flash('User not found. Please login again.', 'danger')
     return redirect(url_for('routes.logout'))
 
@@ -154,7 +162,7 @@ def verify_email(token):
             cursor.execute("UPDATE users SET is_verified=1, verification_token=NULL WHERE verification_token=%s", (token,))
             conn.commit()
             flash("Email verified successfully.", 'success')
-            return redirect(url_for('routes.user_dashboard'))  # Redirect to dashboard or any page after successful verification
+            return redirect(url_for('routes.dashboard'))  # Redirect to dashboard or any page after successful verification
         else:
             print("Token not found or expired!")  # Debugging: Print error
             flash("Invalid or expired verification link.", 'danger')
@@ -262,7 +270,57 @@ def send_verification_email_route_dashboard():
 
     cursor.close()
     conn.close()
-    return redirect(url_for('routes.user_dashboard'))
+    return redirect(url_for('routes.dashboard'))
 
 
 
+
+# ================================
+# Google OAuth Login Route
+# ================================
+@routes.route('/login/google')
+def google_login():
+    if not google.authorized:
+        return redirect(url_for('google.login'))
+
+    user_info = google.get('/plus/v1/people/me')
+    if user_info.status != 200:
+        flash("Failed to retrieve user information from Google.", 'danger')
+        return redirect(url_for('routes.index'))
+
+    user_data = user_info.json()
+
+    conn = create_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM users WHERE email_address=%s", (user_data['emails'][0]['value'],))
+    user = cursor.fetchone()
+
+    if user:
+        session['user_id'] = user[0]
+        session['username'] = user[1]
+        flash('Logged in successfully via Google!', 'success')
+    else:
+        username = user_data['displayName']
+        hashed_password = hash_password('google_oauth_placeholder_password')
+        verification_token = generate_token()
+
+        cursor.execute(
+            "INSERT INTO users (username, password, email_address, verification_token, is_verified) "
+            "VALUES (%s, %s, %s, %s, %s)", (username, hashed_password, user_data['emails'][0]['value'], verification_token, 1)
+        )
+        conn.commit()
+        flash('Account created via Google login!', 'success')
+
+    cursor.close()
+    conn.close()
+
+    return redirect(url_for('routes.dashboard'))
+
+
+@routes.route('/google_login/authorized')
+def google_authorized():
+    if google.authorized:
+        return redirect(url_for('routes.google_login'))
+    else:
+        flash('Authorization failed.', 'danger')
+        return redirect(url_for('routes.index'))
