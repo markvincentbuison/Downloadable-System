@@ -1,11 +1,11 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from flask_mail import Message
-from flask_dance.contrib.google import google
 from app.mysql_connect import create_connection
 from app.extensions.mail import mail
 from app.utils import (generate_token, send_email, send_verification_email, send_reset_email)
 import bcrypt
 import re
+
 import mysql.connector
 from datetime import datetime, timedelta
 import logging
@@ -13,6 +13,9 @@ import logging
 import threading
 import time
 import requests
+# =====THIS IS FOR GOOGLE=====================
+from flask import redirect, url_for, session, flash
+from flask_dance.contrib.google import google
 # ==========================
 # Blueprint
 # ==========================
@@ -286,41 +289,25 @@ keep_alive_thread = threading.Thread(target=ping_self)
 keep_alive_thread.daemon = True
 keep_alive_thread.start()
 #===================================================================================================================================
-# Google Login======================================================================================================================
-google_bp = Blueprint('google_bp', __name__)
-#===================================================================================================================================
-# Google login route================================================================================================================
-@routes.route("/login/google")
-def google_login():
-    return redirect(url_for("google.login"))
-#===================================================================================================================================
-# Google authorized callback route
-@google_bp.route('/google/authorized')
+# ===================== Google OAuth ==========================
+@routes.route('/google/authorized')
 def google_authorized():
-    response = google.authorized_response()
-    if response is None or response.get('access_token') is None:
-        flash("Google login failed.", "danger")
-        return redirect(url_for('routes.index'))
-    # Get the user's info from Google
-    user_info = google.get('/oauth2/v2/userinfo')
-    if user_info.status != 200:
-        flash("Failed to fetch user information.", "danger")
-        return redirect(url_for('routes.index'))
-    user_data = user_info.json()
-    username = user_data['name']
-    email = user_data['email']
-    # Logic to check if the user exists in the database, create or update user
-    conn = create_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM users WHERE email_address=%s", (email,))
-    user = cursor.fetchone()
-    if not user:
-        # Register new user in the database
-        cursor.execute("INSERT INTO users (username, email_address) VALUES (%s, %s)", (username, email))
-        conn.commit()
-    session['user_id'] = user[0]  # Assuming user ID is in the first column
-    session['username'] = username
-    session['is_admin'] = user[-2]  # Assuming admin status is in the second-last column
-    flash("Logged in successfully with Google.", "success")
+    if not google.authorized:
+        flash("Google login failed!", "danger")
+        return redirect(url_for('routes.login'))
+
+    resp = google.get("/oauth2/v2/userinfo")
+    if not resp.ok:
+        flash("Failed to fetch user info.", "danger")
+        return redirect(url_for('routes.login'))
+
+    user_info = resp.json()
+    email = user_info["email"]
+    name = user_info.get("name", "")
+
+    # You can now check if the user exists in your DB or register them
+    session['user_email'] = email
+    flash(f"Welcome, {name}!", "success")
     return redirect(url_for('routes.dashboard'))
 
+# ===================== End of Google OAuth ==========================

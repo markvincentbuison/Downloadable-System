@@ -1,43 +1,50 @@
+import os
 from flask import Flask
-from app.routes.routes import routes
-from app.extensions.mail import mail
 from flask_dance.contrib.google import make_google_blueprint
 from dotenv import load_dotenv
-import os
+from app.routes.routes import routes
+from app.extensions.mail import mail
 
-# Load environment variables from .env file
+# Load environment variables from .env at the root
 load_dotenv()
 
 def create_app():
     app = Flask(__name__)
 
-    # Secret key (move this to your .env file as well for security)
-    app.secret_key = os.getenv('SECRET_KEY', 'fallback_secret')  # Fallback for dev
+    # Secret Key
+    app.secret_key = os.getenv("SECRET_KEY", "fallback_secret")
 
-    # Flask-Mail config using environment variables
-    app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-    app.config['MAIL_PORT'] = 587
-    app.config['MAIL_USE_TLS'] = True
-    app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
-    app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
-    app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_USERNAME')
+    # Mail Configuration
+    app.config["MAIL_SERVER"] = os.getenv("MAIL_SERVER")
+    app.config["MAIL_PORT"] = int(os.getenv("MAIL_PORT", 587))
+    app.config["MAIL_USE_TLS"] = os.getenv("MAIL_USE_TLS", "True") == "True"
+    app.config["MAIL_USE_SSL"] = os.getenv("MAIL_USE_SSL", "False") == "True"
+    app.config["MAIL_USERNAME"] = os.getenv("MAIL_USERNAME")
+    app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD")
+    app.config["MAIL_DEFAULT_SENDER"] = os.getenv("MAIL_DEFAULT_SENDER")
 
-    # Google OAuth config (Flask-Dance)
-    app.config['GOOGLE_OAUTH_CLIENT_ID'] = os.getenv('GOOGLE_OAUTH_CLIENT_ID')
-    app.config['GOOGLE_OAUTH_CLIENT_SECRET'] = os.getenv('GOOGLE_OAUTH_CLIENT_SECRET')
+    # Google OAuth Configuration
+    client_id = os.getenv("GOOGLE_CLIENT_ID")
+    client_secret = os.getenv("GOOGLE_CLIENT_SECRET")
+    redirect_uri = os.getenv("GOOGLE_REDIRECT_URI")
 
-    # Initialize Flask-Mail
+    # Debug prints to help diagnose
+    if not client_id or not client_secret:
+        print("⚠️ Missing Google OAuth credentials in .env")
+
+    # Initialize Mail
     mail.init_app(app)
 
-    # Create Google OAuth blueprint
+    # Create and register Google OAuth Blueprint
     google_bp = make_google_blueprint(
-        client_id=app.config['GOOGLE_OAUTH_CLIENT_ID'],
-        client_secret=app.config['GOOGLE_OAUTH_CLIENT_SECRET'],
-        redirect_to='routes.google_authorized'  # Make sure this matches the route in routes.py
+        client_id=client_id,
+        client_secret=client_secret,
+        redirect_url=redirect_uri,
+        scope=["profile", "email"]
     )
+    app.register_blueprint(google_bp, url_prefix="/google_login")
 
-    # Register blueprints
-    app.register_blueprint(google_bp, url_prefix='/google_login')  # Register Google blueprint here
-    app.register_blueprint(routes)  # Register main routes blueprint
+    # Register your route blueprint
+    app.register_blueprint(routes)
 
     return app
