@@ -56,33 +56,45 @@ def index():
 
 # ==========================
 
+
+
 @routes.route('/login', methods=['POST'])
 def login():
+    # Get login data from the form
     username = request.form['username']
     password = request.form['password']
     
-    conn = create_connection()  # Dynamically uses MySQL or PostgreSQL
+    # Create a connection to PostgreSQL
+    conn = create_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
-    user = cursor.fetchone()  # Fetch the first row (user)
 
+    # Query to fetch user data by username (for PostgreSQL)
+    cursor.execute("SELECT * FROM users WHERE username=%s", (username,))
+    user = cursor.fetchone()  # Fetch the user record based on the username
+    
     cursor.close()
     conn.close()
 
+    # Check if user exists and validate password
     if user:
-        # Assuming the password is in the second column and it's hashed
-        stored_password = user[2]  # Password column (index may vary based on your table structure)
-
-        # Check if the password matches
-        if bcrypt.checkpw(password.encode('utf-8'), stored_password.encode('utf-8')):
-            session['user_id'] = user[0]  # Storing user ID in session
-            session['username'] = user[1]  # Storing username in session
-            session['is_admin'] = user[9]  # Assuming 'is_admin' is the 10th column (change if needed)
-
-            return redirect(url_for('routes.dashboard'))  # Redirect to the dashboard after successful login
+        stored_hash = user[2].encode('utf-8')  # Assuming the password is in the 3rd column (password)
         
-    flash('Invalid credentials, please try again.', 'danger')  # Flash error message if invalid
-    return redirect(url_for('routes.index'))  # Redirect to the login page if failed
+        # Check if the provided password matches the stored hashed password
+        if bcrypt.checkpw(password.encode('utf-8'), stored_hash):
+            # If credentials are correct, set session variables
+            session['user_id'] = user[0]  # Store user ID (from first column)
+            session['username'] = user[1]  # Store username (from second column)
+            session['is_admin'] = user[-2]  # Assuming `is_admin` is the second-to-last column (before created_at)
+            
+            # Redirect to the dashboard if login is successful
+            return redirect(url_for('routes.dashboard'))
+
+    # If login fails, show an error message and redirect to the login page
+    flash('Invalid credentials, please try again.', 'danger')
+    return redirect(url_for('routes.index'))
+
+
+
 
 # =========================================
 # Dashboard Route Login (Admin/User Based)
