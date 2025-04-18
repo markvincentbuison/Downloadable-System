@@ -83,17 +83,8 @@ def login():
             flash('Invalid password hash. Please contact support.', 'danger')
     else:
         flash('User not found.', 'danger')
-
     return redirect(url_for('routes.index'))
-
-
 #===========================================================================================================
-# -----------------------
-# Signup
-# -----------------------
-
-
-
 @routes.route('/signup', methods=['POST'])
 def signup():
     username = request.form.get('username')
@@ -143,11 +134,7 @@ def signup():
         if conn: conn.close()
 
     return redirect(url_for('routes.index'))
-
-
-
-
-#===========================================================================================================
+#=============dashboard==============================================================================================
     return redirect(url_for('routes.index'))
 @routes.route('/dashboard')
 def dashboard():
@@ -170,8 +157,7 @@ def logout():
     session.clear()
     flash('You have been logged out successfully.', 'info')
     return redirect(url_for('routes.index'))
-
-#===========================================================================================================
+#=============verify email==============================================================================================
 @routes.route('/verify-email/<token>')
 def verify_email(token):
     conn = create_connection()
