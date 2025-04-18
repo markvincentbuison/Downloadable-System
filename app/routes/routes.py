@@ -9,10 +9,9 @@ import re
 import mysql.connector
 from datetime import datetime, timedelta
 import logging
-from app.mysql_connect import create_mysql_connection, create_postgres_connection
+from app.mysql_connect import create_mysql_connection
 import logging
 from flask import Blueprint
-from app.mysql_connect import create_mysql_connection, create_postgres_connection
 # =======show all table===================
 from flask import Blueprint, render_template
 # ==========================
@@ -56,41 +55,34 @@ def index():
     return render_template('index.html')
 
 # ==========================
+
 @routes.route('/login', methods=['POST'])
 def login():
     username = request.form['username']
     password = request.form['password']
+    
+    conn = create_connection()  # Dynamically uses MySQL or PostgreSQL
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+    user = cursor.fetchone()  # Fetch the first row (user)
 
-    conn_mysql = create_mysql_connection()
-    conn_postgres = create_postgres_connection()
+    cursor.close()
+    conn.close()
 
-    if not conn_mysql and not conn_postgres:
-        flash('Database connection failed (LOGIN). Please try again later.', 'danger')
-        return redirect(url_for('routes.index'))
+    if user:
+        # Assuming the password is in the second column and it's hashed
+        stored_password = user[2]  # Password column (index may vary based on your table structure)
 
-    try:
-        conn = conn_mysql if conn_mysql else conn_postgres
-        cursor = conn.cursor()
+        # Check if the password matches
+        if bcrypt.checkpw(password.encode('utf-8'), stored_password.encode('utf-8')):
+            session['user_id'] = user[0]  # Storing user ID in session
+            session['username'] = user[1]  # Storing username in session
+            session['is_admin'] = user[9]  # Assuming 'is_admin' is the 10th column (change if needed)
 
-        # PostgreSQL uses %s, MySQL also uses %s in most connectors (e.g., mysql-connector)
-        cursor.execute("SELECT * FROM users WHERE username=%s", (username,))
-        user = cursor.fetchone()
-        cursor.close()
-        conn.close()
-
-        if user and bcrypt.checkpw(password.encode('utf-8'), user[2].encode('utf-8')):
-            session['user_id'] = user[0]
-            session['username'] = user[1]
-            session['is_admin'] = user[-1]  # assuming is_admin is last column
-            return redirect(url_for('routes.dashboard'))
-
-        flash('Invalid credentials, please try again.', 'danger')
-        return redirect(url_for('routes.index'))
-
-    except Exception as e:
-        app.logger.error(f"Login error: {e}")
-        flash('An error occurred during login. Please try again later.', 'danger')
-        return redirect(url_for('routes.index'))
+            return redirect(url_for('routes.dashboard'))  # Redirect to the dashboard after successful login
+        
+    flash('Invalid credentials, please try again.', 'danger')  # Flash error message if invalid
+    return redirect(url_for('routes.index'))  # Redirect to the login page if failed
 
 # =========================================
 # Dashboard Route Login (Admin/User Based)

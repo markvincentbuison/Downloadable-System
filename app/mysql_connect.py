@@ -1,51 +1,44 @@
 # mysql_connect.py
 
 # ✅ Shared Imports
-import mysql.connector
-from mysql.connector import Error
-import psycopg2
-from psycopg2 import OperationalError
-from app.mysql_config import Config  # Import Config class to get DB credentials
 import os
+from app.mysql_config import Config  # Import Config class to get DB credentials
+
+# ✅ MySQL Imports
+import mysql.connector
+from mysql.connector import Error as MySQLError
+
+# ✅ PostgreSQL Imports
+import psycopg2
+from psycopg2 import OperationalError as PostgresError
+
 
 # ✅ Legacy/Generic MySQL Connection Function
-def create_connection(): #connected to login
-    try:
-        connection = mysql.connector.connect(
-            host=Config.MYSQL_HOST,
-            user=Config.MYSQL_USER,
-            password=Config.MYSQL_PASSWORD,
-            database=Config.MYSQL_DB
-        )
+def create_connection():  # connected to login
+    if Config.USE_DB == 'postgres':
+        return create_postgres_connection()
+    return create_mysql_connection()
 
-        if connection.is_connected():
-            print("Successfully connected to MySQL")
-            return connection
-        else:
-            print("Failed to connect to the database")
-            return None
 
-    except Error as e:
-        print(f"Error: {e}")
-        return None
-
-# ✅ Named MySQL Connection (same functionality, more explicit)
+# ✅ Named MySQL Connection (Same functionality, more explicit)
 def create_mysql_connection():
     try:
         connection = mysql.connector.connect(
             host=Config.MYSQL_HOST,
             user=Config.MYSQL_USER,
             password=Config.MYSQL_PASSWORD,
-            database=Config.MYSQL_DB
+            database=Config.MYSQL_DB,
+            port=Config.MYSQL_PORT
         )
         if connection.is_connected():
             print("Connected to MySQL")
             return connection
-    except Error as e:
+    except MySQLError as e:
         print(f"MySQL Error: {e}")
     return None
 
-# ✅ PostgreSQL Connection
+
+# ✅ Named PostgreSQL Connection (for production)
 def create_postgres_connection():
     try:
         connection = psycopg2.connect(
@@ -57,44 +50,26 @@ def create_postgres_connection():
         )
         print("Connected to PostgreSQL")
         return connection
-    except OperationalError as e:
+    except PostgresError as e:
         print(f"PostgreSQL Error: {e}")
     return None
 
-# ✅ Unified Connection Function (Dynamic MySQL / PostgreSQL Selection)
+
+# ✅ Unified Dynamic Connection Function
 def create_dynamic_connection():
-    try:
-        # Check if the environment is set to production (for PostgreSQL)
-        if os.getenv('FLASK_ENV') == 'production':
-            connection = psycopg2.connect(
-                host=Config.PG_HOST,
-                port=Config.PG_PORT,
-                user=Config.PG_USER,
-                password=Config.PG_PASSWORD,
-                dbname=Config.PG_DB
-            )
-            print("Connected to PostgreSQL")
-        else:
-            # Local environment (for MySQL)
-            connection = mysql.connector.connect(
-                host=Config.MYSQL_HOST,
-                user=Config.MYSQL_USER,
-                password=Config.MYSQL_PASSWORD,
-                database=Config.MYSQL_DB,
-                port=Config.MYSQL_PORT
-            )
-            if connection.is_connected():
-                print("Connected to MySQL")
-        
-        return connection
-    
-    except (Error, OperationalError) as e:
-        print(f"Database Connection Error: {e}")
-        return None
+    if Config.USE_DB == 'postgres':
+        return create_postgres_connection()
+    else:
+        return create_mysql_connection()
+
 
 # ✅ Test connections when running this file directly
 if __name__ == "__main__":
-    create_connection()        # Legacy MySQL Connection Test
-    create_mysql_connection()  # Explicit MySQL Connection Test
-    create_postgres_connection()  # PostgreSQL Connection Test
-    create_dynamic_connection()  # Dynamic MySQL or PostgreSQL Connection Test
+    print("▶ Testing Legacy Connection:")
+    create_connection()
+
+    print("\n▶ Testing Explicit MySQL Connection:")
+    create_mysql_connection()
+
+    print("\n▶ Testing Dynamic (Auto-Switching) Connection:")
+    create_dynamic_connection()
