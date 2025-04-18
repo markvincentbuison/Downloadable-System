@@ -64,7 +64,7 @@ Best regards,
 TunNer Team
 """
     send_email(subject, body, email)
-
+# =============================================================================================================
 
 def validate_username(username):
     """Validates the username based on length and allowed characters."""

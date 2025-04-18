@@ -195,39 +195,46 @@ def verify_email(token):
         conn.close()
     return redirect(url_for('routes.index'))
 
-#===========================================================================================================
+#============================FORGOT PASSWORD===============================================================================
 @routes.route('/forgot-password', methods=['POST'])
 def forgot_password():
     email = request.form.get('forgot_email')
     if not email:
         flash('Please enter your email address.', 'warning')
         return redirect(url_for('routes.index'))
-
     conn = create_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM users WHERE email_address=%s", (email,))
-    user = cursor.fetchone()
-    cursor.fetchall()
-
-    if user:
-        reset_token = generate_token()
-        reset_expiry = datetime.utcnow() + timedelta(hours=1)
-        cursor.execute("UPDATE users SET reset_token=%s, reset_token_expiry=%s WHERE email_address=%s",
-                       (reset_token, reset_expiry, email))
-        conn.commit()
-        send_reset_email(email, reset_token)
-        flash('A password reset link has been sent to your email.', 'info')
-    else:
-        flash('Email not found. Please try again.', 'danger')
-
-    cursor.close()
-    conn.close()
+    try:
+        cursor.execute("SELECT * FROM users WHERE email_address=%s", (email,))
+        user = cursor.fetchone()
+        if user:
+            reset_token = generate_token()
+            reset_expiry = datetime.utcnow() + timedelta(hours=1)
+            username = user[1]  # Adjust this index if 'username' is at a different position
+            cursor.execute(
+                "UPDATE users SET reset_token=%s, reset_token_expiry=%s WHERE email_address=%s",
+                (reset_token, reset_expiry, email)
+            )
+            conn.commit()
+            send_reset_email(email, reset_token, username)
+            flash('A password reset link has been sent to your email.', 'info')
+        else:
+            flash('Email not found. Please try again.', 'danger')
+    except Exception as e:
+        print(f"Error during password reset request: {e}")
+        conn.rollback()
+        flash('An error occurred while processing your request.', 'danger')
+    finally:
+        cursor.close()
+        conn.close()
     return redirect(url_for('routes.index'))
 
+
+#========================USER RESET PASSWORD===================================================================================
 @routes.route('/reset-password/<token>', methods=['GET', 'POST'])
 def reset_password(token):
     if request.method == 'GET':
-        return render_template('reset_password.html', token=token)
+        return render_template('user_reset_password.html', token=token)  # ✅ updated template name
 
     new_password = request.form.get('new_password')
     confirm_password = request.form.get('confirm_password')
@@ -235,6 +242,7 @@ def reset_password(token):
     if not new_password or not confirm_password:
         flash("Please fill out both fields.", "danger")
         return redirect(url_for('routes.reset_password', token=token))
+    
     if new_password != confirm_password:
         flash("Passwords do not match.", "danger")
         return redirect(url_for('routes.reset_password', token=token))
@@ -269,6 +277,7 @@ def reset_password(token):
 
     return redirect(url_for('routes.index'))
 
+#===========================================================================================================
 @routes.route('/send-verification-email', methods=['POST'])
 def send_verification_email_route_dashboard():
     user_id = session.get('user_id')
