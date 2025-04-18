@@ -135,7 +135,6 @@ def signup():
 
     return redirect(url_for('routes.index'))
 #=============dashboard==============================================================================================
-    return redirect(url_for('routes.index'))
 @routes.route('/dashboard')
 def dashboard():
     if 'user_id' not in session:
@@ -143,21 +142,29 @@ def dashboard():
         return redirect(url_for('routes.index'))
     conn = create_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT username, is_verified FROM users WHERE id=%s", (session['user_id'],))
+    # Only fetch username and is_admin
+    cursor.execute("SELECT username, is_admin FROM users WHERE id=%s", (session['user_id'],))
     user = cursor.fetchone()
     cursor.close()
     conn.close()
     if user:
-        return render_template('dashboard.html', username=user[0], is_verified=user[1])
+        username, is_admin = user
+        session['is_admin'] = is_admin  # Store admin status in session
+        if is_admin:  # TRUE = admin
+            return render_template('admin_dashboard.html', username=username)
+        else:
+            return render_template('user_dashboard.html', username=username)
     flash('User not found. Please login again.', 'danger')
     return redirect(url_for('routes.logout'))
+
+#=============Logout==============================================================================================
 
 @routes.route('/logout')
 def logout():
     session.clear()
     flash('You have been logged out successfully.', 'info')
     return redirect(url_for('routes.index'))
-#=============verify email==============================================================================================
+#=============Verify email==============================================================================================
 @routes.route('/verify-email/<token>')
 def verify_email(token):
     conn = create_connection()
