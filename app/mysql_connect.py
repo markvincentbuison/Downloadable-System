@@ -1,26 +1,26 @@
 # mysql_connect.py
 
-# ✅ Shared Imports
+# Shared Imports
 import os
 from app.mysql_config import Config  # Import Config class to get DB credentials
 
-# ✅ MySQL Imports
+# MySQL Imports
 import mysql.connector
 from mysql.connector import Error as MySQLError
 
-# ✅ PostgreSQL Imports
+# PostgreSQL Imports
 import psycopg2
 from psycopg2 import OperationalError as PostgresError
 
 
-# ✅ Legacy/Generic MySQL Connection Function
+# Legacy/Generic MySQL Connection Function
 def create_connection():  # connected to login
     if Config.USE_DB == 'postgres':
         return create_postgres_connection()
     return create_mysql_connection()
 
 
-# ✅ Named MySQL Connection (Same functionality, more explicit)
+# Named MySQL Connection (Same functionality, more explicit)
 def create_mysql_connection():
     try:
         connection = mysql.connector.connect(
@@ -38,7 +38,7 @@ def create_mysql_connection():
     return None
 
 
-# ✅ Named PostgreSQL Connection (for production)
+# Named PostgreSQL Connection (for production)
 def create_postgres_connection():
     try:
         connection = psycopg2.connect(
@@ -55,7 +55,7 @@ def create_postgres_connection():
     return None
 
 
-# ✅ Unified Dynamic Connection Function
+# Unified Dynamic Connection Function
 def create_dynamic_connection():
     if Config.USE_DB == 'postgres':
         return create_postgres_connection()
@@ -63,13 +63,13 @@ def create_dynamic_connection():
         return create_mysql_connection()
 
 
-# ✅ Test connections when running this file directly
+# Test connections when running this file directly
 if __name__ == "__main__":
-    print("▶ Testing Legacy Connection:")
+    print("Testing Legacy Connection:")
     create_connection()
 
-    print("\n▶ Testing Explicit MySQL Connection:")
+    print("Testing Explicit MySQL Connection:")
     create_mysql_connection()
 
-    print("\n▶ Testing Dynamic (Auto-Switching) Connection:")
+    print("Testing Dynamic (Auto-Switching) Connection:")
     create_dynamic_connection()
