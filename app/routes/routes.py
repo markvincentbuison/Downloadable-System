@@ -9,7 +9,10 @@ import re
 import mysql.connector
 from datetime import datetime, timedelta
 import logging
-
+# =====this below for for render connecting 24/7=====================
+import threading
+import time
+import requests
 # ==========================
 # Blueprint
 # ==========================
@@ -269,6 +272,19 @@ def send_verification_email_route_dashboard():
     conn.close()
     return redirect(url_for('routes.dashboard'))
 
+#======================================================================================================================
+# ===================== 24/7 Render Keep-Alive ==========================
+def ping_self():
+    while True:
+        try:
+            time.sleep(1200)  # every 20 minutes
+            requests.get("https://downloadable-system.onrender.com/")
+        except Exception as e:
+            print(f"[Keep-Alive Ping Error] {e}")
+
+keep_alive_thread = threading.Thread(target=ping_self)
+keep_alive_thread.daemon = True
+keep_alive_thread.start()
 #======================================================================================================================
 # Google OAuth Routes
 #======================================================================================================================
