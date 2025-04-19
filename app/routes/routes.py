@@ -283,6 +283,83 @@ def send_verification_email_route_dashboard():
     conn.close()
     return redirect(url_for('routes.dashboard'))
 
+# =============== Manage User Routes ========================
+
+# Route to view all users (Admin only)
+@routes.route('/manage-users')
+def manage_users():
+    if 'user_id' not in session or not session.get('is_admin'):
+        flash('You do not have permission to view this page.', 'danger')
+        return redirect(url_for('routes.dashboard'))
+    
+    conn = create_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT id, username, email_address, is_verified, is_admin FROM users")
+        users = cursor.fetchall()
+    except Exception as e:
+        print("Error fetching users:", e)
+        flash("An error occurred while fetching users.", 'danger')
+        return redirect(url_for('routes.dashboard'))
+    finally:
+        cursor.close()
+        conn.close()
+
+    return render_template('admin_manage_users.html', users=users)
+
+# ---------------------------------------------------------------------------------
+# Route to update user role (Admin only)
+@routes.route('/update-user-role/<int:user_id>', methods=['POST'])
+def update_user_role(user_id):
+    if 'user_id' not in session or not session.get('is_admin'):
+        flash('You do not have permission to perform this action.', 'danger')
+        return redirect(url_for('routes.dashboard'))
+
+    new_role = request.form.get('new_role')  # Expected values: 'admin' or 'user'
+    if new_role not in ['admin', 'user']:
+        flash('Invalid role.', 'danger')
+        return redirect(url_for('routes.manage_users'))
+
+    conn = create_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("UPDATE users SET is_admin=%s WHERE id=%s", (1 if new_role == 'admin' else 0, user_id))
+        conn.commit()
+        flash(f'User role updated to {new_role}.', 'success')
+    except Exception as e:
+        print("Error updating user role:", e)
+        flash("An error occurred while updating the user role.", 'danger')
+        conn.rollback()
+    finally:
+        cursor.close()
+        conn.close()
+
+    return redirect(url_for('routes.manage_users'))
+
+
+# Route to delete a user (Admin only)
+@routes.route('/delete-user/<int:user_id>', methods=['POST'])
+def delete_user(user_id):
+    if 'user_id' not in session or not session.get('is_admin'):
+        flash('You do not have permission to perform this action.', 'danger')
+        return redirect(url_for('routes.dashboard'))
+
+    conn = create_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("DELETE FROM users WHERE id=%s", (user_id,))
+        conn.commit()
+        flash('User deleted successfully.', 'success')
+    except Exception as e:
+        print("Error deleting user:", e)
+        flash("An error occurred while deleting the user.", 'danger')
+        conn.rollback()
+    finally:
+        cursor.close()
+        conn.close()
+
+    return redirect(url_for('routes.manage_users'))
+
 #======================================================================================================================
 # ===================== 24/7 Render Keep-Alive ==========================
 def ping_self():
@@ -298,22 +375,11 @@ keep_alive_thread.daemon = True
 keep_alive_thread.start()
 #===================================================================================================================================
 # ===================== Google OAuth ==========================
-@routes.route('/google/authorized')
+@routes.route('/google_login/google/authorized')
 def google_authorized():
-    if not google.authorized:
-        flash("Google login failed!", "danger")
-        return redirect(url_for('routes.login'))
-
-    resp = google.get("/oauth2/v2/userinfo")
-    if not resp.ok:
-        flash("Failed to fetch user info.", "danger")
-        return redirect(url_for('routes.login'))
-
-    user_info = resp.json()
-    email = user_info["email"]
-    name = user_info.get("name", "")
-
-    # You can now check if user exists in DB or register them
-    session['user_email'] = email
-    flash(f"Welcome, {name}!", "success")
-    return redirect(url_for('routes.dashboard'))
+    if google.authorized:
+        # Fetch user information from Google
+        user_info = google.get('/plus/v1/people/me').json()
+        # Process user info (e.g., store in database, create session, etc.)
+        return f"Hello, {user_info['displayName']}!"
+    return redirect(url_for('routes.home'))

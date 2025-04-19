@@ -1,183 +1,41 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Manage User</title>
-
-  <!-- Bootstrap and FontAwesome -->
-  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet" />
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet" />
-  <link href="{{ url_for('static', filename='css/base.css') }}" rel="stylesheet" />
-  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon/favicon.ico') }}"/>
-
-  <!-- jQuery UI -->
-  <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
-  <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
-  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
-
-  <style>
-    .modal-content {
-      cursor: move;
-      overflow: hidden;
-    }
-    .modal-dialog {
-      width: 80%;
-      min-height: 300px;
-      max-width: 90vw;
-    }
-    .modal-body {
-      overflow: auto;
-    }
-    .search-bar {
-      margin-bottom: 10px;
-    }
-    #userTable tbody tr {
-      display: none;
-      transition: all 0.3s ease;
-    }
-  </style>
-</head>
-<body>
-
-  <!-- Navbar -->
-  <nav class="navbar navbar-expand-lg navbar-dark">
-    <div class="container">
-      <a class="navbar-brand" href="#">Manage User</a>
-      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
-        aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav ml-auto">
-          <li class="nav-item">
-            <button onclick="window.close();" class="btn mt-4">Close ❌</button>
-          </li>
-        </ul>
-      </div>
-    </div>
-  </nav>
-
-  <!-- Page Content -->
-  <div class="container my-5">
-    <h2 class="mb-4 text-center">User Management Panel</h2>
-
-    <div class="row">
-      <div class="col-md-12 mb-4">
-        <div class="card p-3 rounded">
-          <h5 class="card-title">User Database</h5>
-          <p class="card-text">Search, view, and manage user account details.</p>
-          <button class="btn btn-primary" data-toggle="modal" data-target="#dbModal">Open User Table</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <footer class="text-center py-3">
-    <p>&copy; 2025 Downloadable System. All Rights Reserved.</p>
-  </footer>
-
-  <!-- User Database Modal -->
-  <div class="modal fade" id="dbModal" tabindex="-1" role="dialog" aria-labelledby="dbModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
-      <div class="modal-content">
-        <div class="modal-header bg-dark text-white">
-          <h5 class="modal-title" id="dbModalLabel">User Database Overview</h5>
-          <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-
-        <div class="modal-body">
-          <!-- Search -->
-          <div class="d-flex justify-content-center mb-3 flex-wrap gap-2">
-            <div style="max-width: 300px; width: 100%;" class="mb-2">
-              <input type="text" id="searchInput" class="form-control form-control-sm search-bar" placeholder="Search by User ID or Username">
-            </div>
-            <button class="btn btn-sm btn-success mb-2 ml-2" id="showAllBtn">Show All</button>
-            <button class="btn btn-sm btn-danger mb-2 ml-2" id="hideAllBtn">Hide All</button>
-          </div>
-
-          <!-- User Table -->
-          <div class="table-responsive">
-            <table class="table table-hover table-bordered text-center" id="userTable">
-              <thead class="thead-dark">
-                <tr>
-                  <th>ID</th>
-                  <th>Username</th>
-                  <th>Email Address</th>
-                  <th>Verification Token</th>
-                  <th>Verification Token Expiry</th>
-                  <th>Verification Status</th>
-                  <th>Google ID</th>
-                  <th>Reset Token</th>
-                  <th>Reset Token Expiry</th>
-                  <th>Admin Status</th>
-                  <th>Created At</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for user in users %}
-                <tr>
-                  <td>{{ user[0] }}</td>
-                  <td>{{ user[1] }}</td>
-                  <td>{{ user[3] }}</td>
-                  <td>{{ user[4] }}</td>
-                  <td>{{ user[5] }}</td>
-                  <td>{{ '✅' if user[6] else '❌' }}</td>
-                  <td>{{ user[7] }}</td>
-                  <td>{{ user[8] }}</td>
-                  <td>{{ user[9] }}</td>
-                  <td>{{ '👑' if user[10] else '👤' }}</td>
-                  <td>{{ user[11] }}</td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-
-            {% if search_query %}
-            <p>Showing results for: "{{ search_query }}"</p>
-            {% endif %}
-          </div>
-        </div>
-
-        <div class="modal-footer">
-          <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Close</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Bootstrap Scripts -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/js/bootstrap.bundle.min.js"></script>
-
-  <!-- Custom JS -->
-  <script>
-    $(document).ready(function () {
-      $(".modal-dialog").draggable({ handle: ".modal-header" });
-      $(".modal-dialog").resizable({ minHeight: 300, minWidth: 400, alsoResize: ".modal-content" });
-
-      $('#dbModal').on('shown.bs.modal', function () {
-        $('#userTable tbody tr').hide();
-      });
-
-      $('#hideAllBtn').on('click', function () {
-        $('#userTable tbody tr').hide();
-        $('#searchInput').val('');
-      });
-
-      $('#showAllBtn').on('click', function () {
-        $('#userTable tbody tr').show();
-      });
-
-      $('#searchInput').on('keyup', function () {
-        var value = $(this).val().toLowerCase();
-        $('#userTable tbody tr').each(function () {
-          $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
-        });
-      });
-    });
-  </script>
-</body>
-</html>
+{% extends "admin_base.html" %}
+{% block content %}
+<h1>Manage Users</h1>
+{% if users %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Email Address</th>
+                <th>Status</th>
+                <th>Role</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for user in users %}
+            <tr>
+                <td>{{ user[1] }}</td> <!-- Username -->
+                <td>{{ user[2] }}</td> <!-- Email Address -->
+                <td>{{ 'Verified' if user[3] else 'Not Verified' }}</td> <!-- Verification Status -->
+                <td>{{ 'Admin' if user[4] else 'User' }}</td> <!-- Role -->
+                <td>
+                    <form action="{{ url_for('routes.update_user_role', user_id=user[0]) }}" method="POST">
+                        <select name="new_role" class="form-control">
+                            <option value="user" {% if not user[4] %}selected{% endif %}>User</option>
+                            <option value="admin" {% if user[4] %}selected{% endif %}>Admin</option>
+                        </select>
+                        <button type="submit" class="btn btn-primary mt-2">Update Role</button>
+                    </form>
+                    <form action="{{ url_for('routes.delete_user', user_id=user[0]) }}" method="POST" class="mt-2">
+                        <button type="submit" class="btn btn-danger">Delete User</button>
+                    </form>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>No users found.</p>
+{% endif %}
+{% endblock %}
