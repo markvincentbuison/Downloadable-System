@@ -44,15 +44,26 @@ def send_verification_email_function(email, token):
 #===============Routes===========================================================================================
 @routes.route('/')
 def index():
+<<<<<<< HEAD
      # Check if the user is already logged in
     if 'user_id' in session:
         return redirect(url_for('routes.dashboard'))  # Redirect to dashboard if already logged in
 
+=======
+    # Check if the user is already logged in
+    if 'user_id' in session:
+        return redirect(url_for('routes.dashboard'))  # Redirect to dashboard if already logged in
+    
+>>>>>>> 94ba388 (google setup)
     return render_template('index.html')
 #==============Login=============================================================================================
 @routes.route('/login', methods=['POST'])
 def login():
+<<<<<<< HEAD
       # Prevent logged-in users from going back to login page
+=======
+        # Prevent logged-in users from going back to login page
+>>>>>>> 94ba388 (google setup)
     if 'user_id' in session:
         return redirect(url_for('routes.dashboard'))  # Redirect to dashboard if already logged in
 
