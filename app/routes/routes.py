@@ -375,45 +375,45 @@ keep_alive_thread.daemon = True
 keep_alive_thread.start()
 #===================================================================================================================================
 # ===================== Google OAuth ==========================
-# Route to login with Google
-@routes.route('/google-login')
+@routes.route('/login/google')  # ✅ Matches the link in HTML
 def google_login():
     if not google.authorized:
         return redirect(url_for('google.login'))
-    
-    # Get user info from Google
-    google_user = google.get('/plus/v1/people/me')
-    if google_user.ok:
-        user_info = google_user.json()
-        email = user_info["emails"][0]["value"]
-        username = user_info["displayName"]
-        
-        # Check if user exists in your database
-        conn = create_connection()
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM users WHERE email_address=%s", (email,))
-        user = cursor.fetchone()
 
-        # If user exists, log them in, otherwise create a new user
+    # Fetch the user's information from Google
+    response = google.get('/plus/v1/people/me')
+    if response.ok:
+        google_user_info = response.json()
+        google_id = google_user_info['id']
+        google_email = google_user_info['emails'][0]['value']
+        google_name = google_user_info['displayName']
+
+        from app.models.user_model import get_or_create_google_user
+        user = get_or_create_google_user(google_id, google_email, google_name)
+
         if user:
-            session['user_id'] = user[0]
-            session['username'] = username
-            flash('Logged in successfully via Google.', 'success')
+            session['user_id'] = user['id']
+            session['username'] = user['username']
+            session['is_admin'] = user['is_admin']
+            return redirect(url_for('routes.dashboard'))
         else:
-            # Create a new user if not already in the database
-            hashed_password = hash_password("google_user")  # Use a default password or random string
-            cursor.execute("""
-                INSERT INTO users (username, password, email_address, is_verified, is_admin)
-                VALUES (%s, %s, %s, %s, %s)
-            """, (username, hashed_password, email, True, False))  # Default is_verified = True
-            conn.commit()
-            flash('Account created and logged in via Google.', 'success')
-            session['user_id'] = cursor.lastrowid
-            session['username'] = username
+            flash('Failed to create or retrieve user.', 'danger')
+            return redirect(url_for('routes.index'))
 
-        conn.close()
-        return redirect(url_for('routes.dashboard'))
-
-    flash('Google login failed.', 'danger')
+    flash('Unable to fetch your Google information.', 'danger')
     return redirect(url_for('routes.index'))
+
 # # ===================== Google Login OAuth ==========================
+# app/routes/routes.py
+
+from dotenv import load_dotenv
+import os
+
+# Load environment variables
+load_dotenv()
+
+# Access environment variables
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID_LOCAL" if os.getenv("FLASK_ENV") == "development" else "GOOGLE_CLIENT_ID_PROD")
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET_LOCAL" if os.getenv("FLASK_ENV") == "development" else "GOOGLE_CLIENT_SECRET_PROD")
+
+# Now you can use GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in your routes

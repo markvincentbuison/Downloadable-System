@@ -5,21 +5,25 @@ from dotenv import load_dotenv
 from app.routes.routes import routes
 from app.extensions.mail import mail
 from datetime import timedelta
+
 # --------------------------------------------------------------------------------------------------------------#
 # Load environment variables from .env at the root
 load_dotenv()
+
 # --------------------------------------------------------------------------------------------------------------#
 def create_app():
     app = Flask(__name__)
-# --------------------------------------------------------------------------------------------------------------#
+
+    # --------------------------------------------------------------------------------------------------------------#
     # Secret Key - used for session signing and security
     app.secret_key = os.getenv("SECRET_KEY", "fallback_secret")
-# --------------------------------------------------------------------------------------------------------------#
+    
+    # --------------------------------------------------------------------------------------------------------------#
     # Session and Remember Me Settings
     app.config['REMEMBER_COOKIE_DURATION'] = timedelta(days=30)  # Remember user for 30 days
     app.config['SESSION_PROTECTION'] = 'strong'  # Strong session protection
-    # ----------------------------------------------------------------------------------------------------------#
 
+    # ----------------------------------------------------------------------------------------------------------#
     # Mail Configuration (to be used for password reset and email verification)
     app.config["MAIL_SERVER"] = os.getenv("MAIL_SERVER")
     app.config["MAIL_PORT"] = int(os.getenv("MAIL_PORT", 587))
@@ -46,23 +50,22 @@ def create_app():
     if not client_id or not client_secret:
         print("⚠️ Missing Google OAuth credentials in .env")
 
+    # Create the Google OAuth blueprint
+    google_bp = make_google_blueprint(
+        client_id=client_id,
+        client_secret=client_secret,
+        redirect_to='google_login'  # Make sure this route exists in your `routes.py`
+    )
+
+    # Register the blueprint with the Flask app
+    app.register_blueprint(google_bp, url_prefix='/google_login')
+
     # ----------------------------------------------------------------------------------------------------------#
     # Initialize Mail
     mail.init_app(app)
+
     # ----------------------------------------------------------------------------------------------------------#
-
-    # Create and register Google OAuth Blueprint (Only if not already registered in routes)
-    google_bp = make_google_blueprint(
-        client_id="37646923386-0j8q2v1b5c4f3g7h6k4d8j9g3k0m5j7e.apps.googleusercontent.com",
-        client_secret="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",
-        redirect_url="https://7aa9-112-203-134-9.ngrok-free.app/google_login/google/authorized",
-        scope=["profile", "email"]
-    )
-    app.register_blueprint(google_bp, url_prefix="/google_login")
-
-    # Register your route blueprint (This will include your app routes)
+    # Register routes from routes.py
     app.register_blueprint(routes)
 
-    # Return the app instance
     return app
-    # --------------------------------------------------------------------------------------------------------------#
