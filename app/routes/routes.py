@@ -375,11 +375,45 @@ keep_alive_thread.daemon = True
 keep_alive_thread.start()
 #===================================================================================================================================
 # ===================== Google OAuth ==========================
-@routes.route('/google_login/google/authorized')
-def google_authorized():
-    if google.authorized:
-        # Fetch user information from Google
-        user_info = google.get('/plus/v1/people/me').json()
-        # Process user info (e.g., store in database, create session, etc.)
-        return f"Hello, {user_info['displayName']}!"
-    return redirect(url_for('routes.home'))
+# Route to login with Google
+@routes.route('/google-login')
+def google_login():
+    if not google.authorized:
+        return redirect(url_for('google.login'))
+    
+    # Get user info from Google
+    google_user = google.get('/plus/v1/people/me')
+    if google_user.ok:
+        user_info = google_user.json()
+        email = user_info["emails"][0]["value"]
+        username = user_info["displayName"]
+        
+        # Check if user exists in your database
+        conn = create_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM users WHERE email_address=%s", (email,))
+        user = cursor.fetchone()
+
+        # If user exists, log them in, otherwise create a new user
+        if user:
+            session['user_id'] = user[0]
+            session['username'] = username
+            flash('Logged in successfully via Google.', 'success')
+        else:
+            # Create a new user if not already in the database
+            hashed_password = hash_password("google_user")  # Use a default password or random string
+            cursor.execute("""
+                INSERT INTO users (username, password, email_address, is_verified, is_admin)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (username, hashed_password, email, True, False))  # Default is_verified = True
+            conn.commit()
+            flash('Account created and logged in via Google.', 'success')
+            session['user_id'] = cursor.lastrowid
+            session['username'] = username
+
+        conn.close()
+        return redirect(url_for('routes.dashboard'))
+
+    flash('Google login failed.', 'danger')
+    return redirect(url_for('routes.index'))
+# # ===================== Google Login OAuth ==========================
